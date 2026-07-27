@@ -1,0 +1,17 @@
+# Archivos temporales
+*.swp
+*~
+
+# Miniaturas
+Thumbs.db
+.DS_Store
+
+# Configuración de VS Code
+.vscode/
+
+# Archivos de respaldo
+*.bak
+
+# Logs
+*.log
+

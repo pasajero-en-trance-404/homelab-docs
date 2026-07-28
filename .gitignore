@@ -15,3 +15,19 @@ Thumbs.db
 # Logs
 *.log
 
+# Datos persistentes de servicios
+../homelab-data/
+
+# Variables de entorno
+.env
+*.env
+
+# Backups
+*.backup
+*.bak
+
+# Logs
+*.log
+
+# Temporales
+*.tmp

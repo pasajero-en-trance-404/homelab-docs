@@ -2,6 +2,7 @@ services:
   uptime-kuma:
     image: louislam/uptime-kuma:latest
     container_name: uptime-kuma
+
     restart: unless-stopped
 
     ports:
@@ -10,3 +11,9 @@ services:
     volumes:
       - /home/administrador/homelab-data/uptime-kuma:/app/data
 
+    networks:
+      - homelab
+
+networks:
+  homelab:
+    external: true

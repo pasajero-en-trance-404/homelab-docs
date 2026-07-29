@@ -62,9 +62,9 @@ Todo lo que se instala, configura o modifica queda documentado.
 - [x] XFCE
 - [x] Acceso a Internet
 - [x] SSH Server
-- [ ] Docker
-- [ ] Portainer
-- [ ] n8n
+- [x] Docker
+- [x] Portainer
+- [x] n8n
 - [ ] OpenCode
 - [ ] Tailscale
 - [ ] Cloudflare Tunnel

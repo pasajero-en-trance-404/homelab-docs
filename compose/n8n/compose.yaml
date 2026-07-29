@@ -1,0 +1,23 @@
+services:
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:latest
+    container_name: n8n
+
+    restart: unless-stopped
+
+    ports:
+      - "${N8N_PORT}:5678"
+
+    environment:
+      - TZ=${TZ}
+      - N8N_SECURE_COOKIE=${N8N_SECURE_COOKIE}
+
+    volumes:
+      - /home/administrador/homelab-data/n8n:/home/node/.n8n
+
+    networks:
+      - homelab
+
+networks:
+  homelab:
+    external: true

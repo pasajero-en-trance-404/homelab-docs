@@ -1,0 +1,12 @@
+[Unit]
+Description=Daily homelab backup at 03:00
+Documentation=https://github.com/anomalyco/homelab-docs
+Requires=backup.service
+
+[Timer]
+OnCalendar=daily
+Persistent=true
+RandomizedDelaySec=300
+
+[Install]
+WantedBy=timers.target

@@ -127,6 +127,27 @@ Convención: `~/homelab-data/<nombre-servicio>/`
 - Los datos persistentes NUNCA deben estar dentro del repositorio git
 - Si se migra un servicio, preservar la carpeta de datos correspondiente
 
+## Backups
+
+Existe un sistema automático de backups programado con systemd timer:
+
+| Aspecto          | Detalle                                              |
+|------------------|------------------------------------------------------|
+| Script           | `backup/backup.sh`                                   |
+| Timer            | `backup.timer` — diario a las 03:00 ±5 min           |
+| Destino          | `/home/administrador/backups/`                       |
+| Contenido        | `~/homelab-data/` + `~/homelab-docs/`                |
+| Compresión       | `tar -czf` (gzip)                                    |
+| Retención        | 7 backups diarios + 4 semanales (domingos)            |
+| Formato archivo  | `homelab-YYYY-MM-DD-HHMMSS.tar.gz`                   |
+| Ejecución        | `User=root` (permisos de Portainer requieren root)    |
+
+**Limitación**: el destino está en el mismo disco físico (`/dev/sda4`). No protege contra fallo del SSD.
+
+**Pendiente futuro**: backup a disco externo USB o destino remoto (rsync, rsync.net, BorgBase).
+
+No modificar los archivos de backup sin entender el flujo completo (stop de contenedores SQLite, restart, verificación).
+
 ## Buenas prácticas para agentes
 
 - Leer este archivo al inicio de cada sesión
@@ -145,7 +166,7 @@ Convención: `~/homelab-data/<nombre-servicio>/`
 - [ ] Reverse proxy (Traefik o Nginx Proxy Manager) — TLS, dominios
 - [ ] OpenCode — agente de IA local
 - [ ] Base de datos (PostgreSQL, SQLite)
-- [ ] Sistema de backups automáticos
+- [x] Sistema de backups automáticos
 - [ ] Monitoreo y alertas (Prometheus + Grafana?)
 - [ ] APIs y servicios propios desplegados como contenedores
 - [ ] Posible ampliación de RAM a 8 GB

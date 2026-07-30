@@ -38,3 +38,6 @@
 - n8n usa la variable `${N8N_PORT}` definida en `compose/n8n/.env`.
 - No hay reverse proxy ni SSL configurado. Todos los servicios acceden por HTTP.
 - Homepage tiene acceso al socket de Docker para mostrar contenedores en el dashboard.
+- Los servicios están protegidos por el firewall DOCKER-USER. Solo Homepage (3000) es accesible desde la LAN. El resto solo responde por Tailscale.
+- Todos los servicios se acceden por Tailscale desde fuera de la LAN. Ver `05-red.md` para comandos de acceso.
+- El firewall está documentado en `05-red.md#firewall-docker-user`.

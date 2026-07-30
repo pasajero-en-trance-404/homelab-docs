@@ -16,15 +16,18 @@ Convertir una PC antigua (AMD A4-4000, 4 GB RAM, SSD 120 GB) en una plataforma p
 
 ```
 Internet
-  └─ Servidor Debian 13 (192.168.1.50/24)
-       └─ Docker Engine (29.6.2)
-            ├─ Portainer (9000)      ⬥ Administración de contenedores
-            ├─ Homepage (3000)       ⬥ Dashboard de servicios
-            ├─ n8n (5678)            ⬥ Automatización low-code
-            └─ Uptime Kuma (3001)    ⬥ Monitoreo de uptime
+  └─ Tailscale (100.119.176.84/32)
+       └─ Servidor Debian 13 (192.168.1.50/24)
+            ├─ SSH (22)              ⬥ Solo key, sin root
+            ├─ Firewall DOCKER-USER  ⬥ Bloquea LAN no autorizada
+            └─ Docker Engine (29.6.2)
+                 ├─ Portainer (9000)      ⬥ Administración de contenedores
+                 ├─ Homepage (3000)       ⬥ Dashboard de servicios
+                 ├─ n8n (5678)            ⬥ Automatización low-code
+                 └─ Uptime Kuma (3001)    ⬥ Monitoreo de uptime
 ```
 
-Todos los servicios comparten la red `homelab` (external: true). No hay reverse proxy ni SSL configurado aún.
+Todos los servicios comparten la red `homelab` (external: true, 172.22.0.0/16). No hay reverse proxy ni SSL configurado aún. El acceso externo es exclusivamente por Tailscale.
 
 ## Estructura de carpetas
 
@@ -32,21 +35,32 @@ Todos los servicios comparten la red `homelab` (external: true). No hay reverse 
 ~/homelab-docs/                 ← Este repositorio (git)
 ├── AGENTS.md                   ← Contexto para agentes de IA
 ├── README.md                   ← Documentación principal
+├── CHANGELOG.md                ← Historial de cambios
 ├── 00-estado-inicial.md        ← Estado del equipo al comenzar
 ├── 01-hardware.md              ← Especificaciones de hardware
 ├── 02-instalacion-debian.md    ← Instalación de Debian 13
 ├── 03-sistema-base.md          ← Configuración base del sistema
 ├── 04-docker.md                ← Instalación de Docker
-├── 05-red.md                   ← Configuración de red
-├── 06-servicios.md             ← (vacio) Servicios instalados
-├── 07-automatizacion.md        ← (vacio) Automatizaciones
+├── 05-red.md                   ← Configuración de red, firewall, SSH
+├── 06-servicios.md             ← Servicios instalados
+├── 07-automatizacion.md        ← Automatizaciones
 ├── 08-problemas.md             ← Problemas encontrados y soluciones
-├── 09-comandos-utiles.md       ← (vacio) Comandos de referencia
+├── 09-comandos-utiles.md       ← Comandos de referencia
+├── backup/
+│   ├── backup.sh               ← Script de backup automático
+│   ├── backup.service          ← Systemd service unit
+│   ├── backup.timer            ← Systemd timer (diario 03:00)
+│   └── README.md               ← Documentación del sistema de backups
+├── docs/
+│   └── architecture.md         ← Arquitectura general del homelab
 ├── assets/
 │   ├── diagramas/
 │   ├── fotos/
 │   └── screenshots/
 └── compose/                    ← Archivos Docker Compose
+    ├── firewall/
+    │   ├── restore-docker-user.sh       ← Script de restauración del firewall
+    │   └── docker-user-restore.service  ← Systemd service unit
     ├── homepage/
     │   ├── compose.yaml
     │   └── services.yaml       ← Config de Homepage dashboard
@@ -54,24 +68,23 @@ Todos los servicios comparten la red `homelab` (external: true). No hay reverse 
     │   ├── .env                ← Variables de entorno
     │   └── compose.yaml
     ├── portainer/
-    │   ├── compose.yaml
-    │   └── docker-compose.yml  ← ⚠ Legacy, no usar
+    │   └── compose.yaml
     └── uptime-kuma/
         └── compose.yaml
 ```
 
 ## Servicios instalados
 
-| Servicio   | Imagen                              | Puerto   | Estado      |
-|------------|-------------------------------------|----------|-------------|
-| Portainer  | portainer/portainer-ce:latest       | 9000     | En uso      |
-| Homepage   | ghcr.io/gethomepage/homepage:latest | 3000     | En uso      |
-| n8n        | docker.n8n.io/n8nio/n8n:latest      | 5678     | En uso      |
-| Uptime Kuma| louislam/uptime-kuma:latest         | 3001     | En uso      |
+| Servicio   | Imagen                              | Puerto   | Estado       |
+|------------|-------------------------------------|----------|--------------|
+| Portainer  | portainer/portainer-ce:latest       | 9000     | Up           |
+| Homepage   | ghcr.io/gethomepage/homepage:latest | 3000     | Up (healthy) |
+| n8n        | docker.n8n.io/n8nio/n8n:latest      | 5678     | Up           |
+| Uptime Kuma| louislam/uptime-kuma:latest         | 3001     | Up (healthy) |
 
 ## Puertos utilizados
 
-- 22: SSH
+- 22: SSH (solo key, sin password)
 - 3000: Homepage (dashboard)
 - 3001: Uptime Kuma (monitoreo)
 - 5678: n8n (automatización)
@@ -102,6 +115,37 @@ Convención: `~/homelab-data/<nombre-servicio>/`
 8. Registrar el servicio en `compose/homepage/services.yaml`
 9. Agregar entrada en 06-servicios.md
 10. No exponer puertos innecesarios
+
+## Firewall
+
+El firewall usa reglas `iptables-nft` en la cadena `DOCKER-USER`. No hay UFW. La política INPUT sigue en ACCEPT.
+
+### Reglas activas
+
+Agregadas en `DOCKER-USER` (cadena de admin que Docker preserva):
+
+1. `ctstate RELATED,ESTABLISHED` — mantener conexiones activas
+2. `-i tailscale0` — permitir todo desde Tailscale
+3. `-i br+/docker0 dport 53 (udp+tcp)` — DNS desde contenedores
+4. `-i br+/docker0 dport 80,443` — HTTP/HTTPS desde contenedores
+5. `-i br+/docker0 icmp` — ping desde contenedores
+6. `-s 192.168.1.0/24 dport 3000` — Homepage desde LAN
+7. DROP — todo lo demás bloqueado
+
+### Persistencia
+
+Las reglas se restauran al boot via systemd:
+
+| Componente | Ruta |
+|------------|------|
+| Script | `/usr/local/sbin/restore-docker-user.sh` |
+| Service | `/etc/systemd/system/docker-user-restore.service` |
+| Snapshot | `/etc/iptables/rules.v4.backup` |
+| Fuente repo | `compose/firewall/` |
+
+Restaurar manualmente: `sudo systemctl restart docker-user-restore.service`
+
+Para modificar reglas: editar `compose/firewall/restore-docker-user.sh`, ejecutar manualmente, verificar, actualizar snapshot.
 
 ## Reglas de seguridad
 
@@ -161,12 +205,14 @@ No modificar los archivos de backup sin entender el flujo completo (stop de cont
 
 ## Roadmap futuro
 
-- [ ] Tailscale — acceso remoto a la red
+- [x] Tailscale — acceso remoto a la red
+- [x] SSH hardening — solo key auth, sin root, sin X11
+- [x] Firewall (DOCKER-USER) — bloqueo de LAN no autorizada
+- [x] Sistema de backups automáticos
 - [ ] Cloudflare Tunnel — publicación segura de servicios
 - [ ] Reverse proxy (Traefik o Nginx Proxy Manager) — TLS, dominios
 - [ ] OpenCode — agente de IA local
 - [ ] Base de datos (PostgreSQL, SQLite)
-- [x] Sistema de backups automáticos
 - [ ] Monitoreo y alertas (Prometheus + Grafana?)
 - [ ] APIs y servicios propios desplegados como contenedores
 - [ ] Posible ampliación de RAM a 8 GB
@@ -180,4 +226,5 @@ No modificar los archivos de backup sin entender el flujo completo (stop de cont
 - Shell por defecto: bash
 - Zona horaria: `America/Argentina/Buenos_Aires`
 - Docker Engine 29.6.2 | Docker Compose v5.3.1
-- El repositorio tiene un archivo `docker-compose.yml` legacy en `compose/portainer/` que usa named volume — no usar, preferir el `compose.yaml` de esa misma carpeta
+- Acceso SSH solo por clave, sin password, sin root
+- Portainer fue migrado de `docker-compose.yml` a `compose.yaml` durante la limpieza del repositorio. El archivo legacy fue reemplazado.

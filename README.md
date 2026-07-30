@@ -22,7 +22,8 @@ Todo lo que se instala, configura o modifica queda documentado.
 - Automatizar procesos con n8n.
 - Administrar servicios mediante Portainer.
 - Acceder remotamente con Tailscale.
-- Publicar servicios mediante Cloudflare Tunnel.
+- Asegurar el servidor con firewall y SSH hardening.
+- Automatizar backups.
 - Documentar todo el proceso.
 
 ---
@@ -31,10 +32,11 @@ Todo lo que se instala, configura o modifica queda documentado.
 
 | Componente | Especificación |
 |------------|----------------|
-| CPU | AMD A4-4000 APU |
-| RAM | 4 GB DDR3 (objetivo: 8 GB) |
-| Disco | SSD 120 GB |
-| Red | Ethernet |
+| CPU | AMD A4-4000 APU (2 cores, 3.0 GHz) |
+| RAM | 4 GB DDR3 (3 GB disponibles, objetivo: 8 GB) |
+| Disco | SSD 120 GB (60 GB partición sistema, 20% usado) |
+| Placa | ASUS A55BM-K (2014) |
+| Red | Ethernet 1000 Mbps |
 
 ---
 
@@ -47,27 +49,42 @@ Todo lo que se instala, configura o modifica queda documentado.
 | 02-instalacion-debian.md | Instalación paso a paso |
 | 03-sistema-base.md | Configuración inicial |
 | 04-docker.md | Docker |
-| 05-red.md | Red, SSH, Tailscale |
+| 05-red.md | Red, Tailscale, firewall, SSH |
 | 06-servicios.md | Servicios instalados |
-| 07-automatizacion.md | Automatizaciones |
-| 08-problemas.md | Errores encontrados |
+| 07-automatizacion.md | Automatizaciones (n8n) |
+| 08-problemas.md | Errores encontrados y soluciones |
 | 09-comandos-utiles.md | Comandos de referencia |
+| docs/architecture.md | Arquitectura general del homelab |
+| CHANGELOG.md | Historial de cambios del proyecto |
+| AGENTS.md | Contexto para agentes de IA |
 
 ---
 
 ## 🚀 Estado del proyecto
 
-- [x] Instalación de Debian 13
+### Implementado
+
+- [x] Instalación de Debian 13 (Trixie)
 - [x] Dual Boot con Windows
-- [x] XFCE
-- [x] Acceso a Internet
-- [x] SSH Server
-- [x] Docker
-- [x] Portainer
-- [x] n8n
-- [ ] OpenCode
-- [ ] Tailscale
-- [ ] Cloudflare Tunnel
+- [x] Entorno gráfico XFCE
+- [x] Docker Engine 29.6.2 + Compose v5.3.1
+- [x] Portainer — Administración de contenedores
+- [x] Homepage — Dashboard de servicios
+- [x] n8n — Automatización low-code
+- [x] Uptime Kuma — Monitoreo de uptime
+- [x] Tailscale — Acceso remoto seguro
+- [x] SSH hardening — Solo clave, sin root, sin X11
+- [x] Firewall persistente (DOCKER-USER) — Bloqueo LAN no autorizada
+- [x] Backups automáticos — Diarios con retención
+
+### Pendiente
+
+- [ ] Reverse proxy (Traefik / Nginx Proxy Manager) — TLS, dominios
+- [ ] OpenCode — Agente de IA local
+- [ ] Base de datos (PostgreSQL / SQLite)
+- [ ] Monitoreo y alertas (Prometheus + Grafana)
+- [ ] APIs y servicios propios
+- [ ] Ampliación de RAM a 8 GB
 
 ---
 
@@ -76,4 +93,3 @@ Todo lo que se instala, configura o modifica queda documentado.
 > Documentar primero. Instalar después.
 
 Cada cambio realizado en el servidor queda registrado en este repositorio para poder reconstruir el proyecto desde cero.
-

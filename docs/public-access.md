@@ -49,7 +49,7 @@ No hay puertos abiertos en el router. No hay IP pública expuesta. TLS es autom�
 
 ### Regla general
 
-**Funnel solo para la API.** Todo panel administrativo (Portainer, Homepage, n8n, Uptime Kuma) debe usar **Serve** para mantenerse privado dentro del tailnet.
+**Funnel solo para la API.** Todo panel administrativo (Portainer, Homepage, n8n, Uptime Kuma) se accede directamente por Tailscale usando la IP del tailnet o por LAN, sin Serve ni Funnel.
 
 ## Servicios: públicos vs privados
 
@@ -59,7 +59,7 @@ No hay puertos abiertos en el router. No hay IP pública expuesta. TLS es autom�
 |----------|-----|--------------|
 | API | `https://debian-server.taile532c7.ts.net/api` | 8000 |
 
-### Privado (Tailscale Serve / LAN)
+### Privado (solo Tailscale / LAN)
 
 | Servicio | Acceso | Puerto |
 |----------|--------|--------|
@@ -67,6 +67,8 @@ No hay puertos abiertos en el router. No hay IP pública expuesta. TLS es autom�
 | Portainer | solo tailnet | 9000 |
 | n8n | solo tailnet | 5678 |
 | Uptime Kuma | solo tailnet | 3001 |
+
+Los servicios privados se acceden directamente por `http://debian-server:<puerto>` desde la tailnet (Tailscale resuelve el hostname automáticamente).
 
 ## Comandos de referencia
 
@@ -79,7 +81,7 @@ sudo tailscale funnel --bg 8000
 ### Desactivar Funnel
 
 ```bash
-sudo tailscale funnel 8000 off
+sudo tailscale funnel --https=443 off
 ```
 
 ### Verificar estado
@@ -88,36 +90,41 @@ sudo tailscale funnel 8000 off
 tailscale funnel status
 ```
 
-### Activar Serve para servicios privados (ej: Homepage)
+### Acceder a servicios privados por Tailscale
+
+No se necesita Serve. Los servicios son accesibles directamente desde la tailnet:
 
 ```bash
-sudo tailscale serve --bg 3000
+# Desde cualquier dispositivo conectado a Tailscale
+http://debian-server:3000   # Homepage
+http://debian-server:9000   # Portainer
+http://debian-server:5678   # n8n
+http://debian-server:3001   # Uptime Kuma
 ```
 
 ### Desactivar Serve
 
 ```bash
-sudo tailscale serve 3000 off
+sudo tailscale serve --https=443 off
 ```
 
-## Migrar Funnel de Homepage a API
+## Puesta en producción
 
-Si tenés Funnel activo en el puerto 3000 (Homepage) y querés que la API esté en la raíz:
+Comandos usados para exponer la API:
 
 ```bash
-# 1. Desactivar Funnel en Homepage
-sudo tailscale funnel 3000 off
+# 1. Resetear configuración previa
+sudo tailscale funnel reset
 
-# 2. Activar Funnel para la API
+# 2. Exponer API públicamente por Funnel
 sudo tailscale funnel --bg 8000
-
-# 3. (Opcional) Homepage disponible solo por Tailscale Serve
-sudo tailscale serve --bg 3000
 ```
 
-Luego la API responde en:
+La API responde en:
 - `https://debian-server.taile532c7.ts.net/api`
 - `https://debian-server.taile532c7.ts.net/api/health`
+
+Los servicios administrativos se acceden por Tailscale directo sin Serve/Funnel.
 
 ## DuckDNS
 

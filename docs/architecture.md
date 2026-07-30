@@ -203,4 +203,4 @@ n8n
 
 - Puerto 22 (SSH): solo accesible por clave, desde LAN o Tailscale.
 - La API se accede desde Internet vía Tailscale Funnel en `https://debian-server.taile532c7.ts.net/api`.
-- Los servicios administrativos usan Tailscale Serve (solo tailnet) o bind a LAN.
+- Los servicios administrativos se acceden directamente por Tailscale (IP/hostname del tailnet) o por bind a LAN.

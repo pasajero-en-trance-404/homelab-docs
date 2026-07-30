@@ -10,7 +10,7 @@
 
 | Servicio    | Imagen                                    | Puerto  | Estado               | Red      | Ruta de datos                             |
 |-------------|-------------------------------------------|---------|----------------------|----------|--------------------------------------------|
-| API         | build local (Dockerfile)                  | 8000    | —                    | homelab  | ~/homelab-data/api (.env)                  |
+| API         | build local (Dockerfile)                  | 8000    | Up                   | homelab  | ~/homelab-data/api (.env)                  |
 | Portainer   | portainer/portainer-ce:latest             | 9000    | Up                   | homelab  | ~/homelab-data/portainer                   |
 | Homepage    | ghcr.io/gethomepage/homepage:latest       | 3000    | Up (healthy)         | homelab  | ~/homelab-data/homepage                    |
 | n8n         | docker.n8n.io/n8nio/n8n:latest            | 5678    | Up                   | homelab  | ~/homelab-data/n8n                         |

@@ -91,7 +91,7 @@ El acceso externo:
 
 | Servicio   | Imagen                              | Puerto   | Estado       | Acceso       |
 |------------|-------------------------------------|----------|--------------|--------------|
-| API        | build local (Dockerfile)            | 8000     | —            | Público      |
+| API        | build local (Dockerfile)            | 8000     | Up           | Público      |
 | Portainer  | portainer/portainer-ce:latest       | 9000     | Up           | Tailnet/LAN  |
 | Homepage   | ghcr.io/gethomepage/homepage:latest | 3000     | Up (healthy) | Tailnet/LAN  |
 | n8n        | docker.n8n.io/n8nio/n8n:latest      | 5678     | Up           | Tailnet      |

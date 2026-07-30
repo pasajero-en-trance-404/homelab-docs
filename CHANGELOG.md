@@ -2,6 +2,22 @@
 
 Todas las fechas en `YYYY-MM-DD`.
 
+## [2026-07-30] — API pública con Tailscale Funnel
+
+### Agregado
+- Servicio API: `compose/api/` con FastAPI, Dockerfile y compose.yaml
+- Endpoints: `GET /api`, `GET /api/health`
+- Middleware X-API-Key para endpoints protegidos futuros
+- Documentación de acceso público: `docs/public-access.md`
+- Integración con Tailscale Funnel para exposición pública sin abrir puertos
+
+### Modificado
+- `AGENTS.md` — arquitectura actualizada con Funnel + API, tabla de servicios con columna de acceso, sección de exposición pública, roadmap
+- `README.md` — sección Servicios públicos, roadmap actualizado
+- `06-servicios.md` — API agregada a tabla de servicios y puertos
+- `compose/homepage/services.yaml` — API agregada al dashboard
+- `docs/architecture.md` — diagrama con Funnel, tabla de acceso público/privado
+
 ## [2026-07-29] — Firewall persistente y documentación
 
 ### Agregado

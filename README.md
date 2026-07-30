@@ -55,6 +55,7 @@ Todo lo que se instala, configura o modifica queda documentado.
 | 08-problemas.md | Errores encontrados y soluciones |
 | 09-comandos-utiles.md | Comandos de referencia |
 | docs/architecture.md | Arquitectura general del homelab |
+| docs/public-access.md | Acceso público (Tailscale Funnel) |
 | CHANGELOG.md | Historial de cambios del proyecto |
 | AGENTS.md | Contexto para agentes de IA |
 
@@ -77,13 +78,17 @@ Todo lo que se instala, configura o modifica queda documentado.
 - [x] Firewall persistente (DOCKER-USER) — Bloqueo LAN no autorizada
 - [x] Backups automáticos — Diarios con retención
 
+### Servicios públicos
+
+- [x] Tailscale Funnel — Exposición pública de la API sin abrir puertos
+- [x] API pública (FastAPI) — `GET /api`, `GET /api/health`
+
 ### Pendiente
 
 - [ ] Reverse proxy (Traefik / Nginx Proxy Manager) — TLS, dominios
 - [ ] OpenCode — Agente de IA local
 - [ ] Base de datos (PostgreSQL / SQLite)
 - [ ] Monitoreo y alertas (Prometheus + Grafana)
-- [ ] APIs y servicios propios
 - [ ] Ampliación de RAM a 8 GB
 
 ---

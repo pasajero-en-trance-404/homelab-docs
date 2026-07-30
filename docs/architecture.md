@@ -7,48 +7,59 @@
                     │         Internet                    │
                     └──────────────┬──────────────────────┘
                                    │
-                          ┌────────▼────────┐
-                          │   Tailscale     │
-                          │  100.119.176.84 │
-                          │  MagicDNS:      │
-                          │  debian-server  │
-                          │  .taile532c7    │
-                          │  .ts.net        │
-                          └────────┬────────┘
+                           ┌────────▼────────┐
+                           │ Tailscale Funnel│
+                           │ /api → :8000    │
+                           │ (TLS público)   │
+                           └────────┬────────┘
+                                   │
+                           ┌────────▼────────┐
+                           │   Tailscale     │
+                           │  100.119.176.84 │
+                           │  MagicDNS:      │
+                           │  debian-server  │
+                           │  .taile532c7    │
+                           │  .ts.net        │
+                           └────────┬────────┘
                                    │ wireguard
                                    │ (cifrado)
-                          ┌────────▼────────┐
-                          │   Router LAN    │
-                          │  192.168.1.1    │
-                          └────────┬────────┘
+                           ┌────────▼────────┐
+                           │   Router LAN    │
+                           │  192.168.1.1    │
+                           └────────┬────────┘
                                    │
-                          ┌────────▼────────┐
-                          │   Servidor      │
-                          │  Debian 13      │
-                          │  192.168.1.50   │
-                          │  enp3s0         │
-                          └────────┬────────┘
+                           ┌────────▼────────┐
+                           │   Servidor      │
+                           │  Debian 13      │
+                           │  192.168.1.50   │
+                           │  enp3s0         │
+                           └────────┬────────┘
                                    │
-                    ┌──────────────┼──────────────┐
-                    │              │              │
-              ┌─────▼─────┐  ┌────▼────┐  ┌─────▼─────┐
-              │  SSH (22) │  │ Firewall│  │  Docker   │
-              │  solo key │  │ DOCKER- │  │ Engine    │
-              │           │  │ USER    │  │ 29.6.2    │
-              └───────────┘  └────┬────┘  └─────┬─────┘
-                                  │              │
-                          ┌───────┴──────────────┴───────┐
-                          │     Red homelab (172.22.0)   │
-                          │  Bridge externo (br-bd61d7)  │
-                          └───────┬──────────────┬───────┘
-                                  │              │
-              ┌───────────────────┼──────────────┼───────────────────┐
-              │                   │              │                   │
-        ┌─────▼─────┐      ┌─────▼─────┐  ┌─────▼─────┐      ┌─────▼─────┐
-        │  Homepage │      │ Portainer │  │   n8n     │      │Uptime Kuma│
-        │   :3000   │      │   :9000   │  │   :5678   │      │   :3001   │
-        │  healthy  │      │  running  │  │  running  │      │  healthy  │
-        └───────────┘      └───────────┘  └───────────┘      └───────────┘
+                     ┌──────────────┼──────────────┐
+                     │              │              │
+               ┌─────▼─────┐  ┌────▼────┐  ┌─────▼─────┐
+               │  SSH (22) │  │ Firewall│  │  Docker   │
+               │  solo key │  │ DOCKER- │  │ Engine    │
+               │           │  │ USER    │  │ 29.6.2    │
+               └───────────┘  └────┬────┘  └─────┬─────┘
+                                   │              │
+                           ┌───────┴──────────────┴───────┐
+                           │     Red homelab (172.22.0)   │
+                           │  Bridge externo (br-bd61d7)  │
+                           └───────┬──────────────┬───────┘
+                                   │              │
+               ┌───────────────────┼──────────────┼───────────────────┐
+               │                   │              │                   │
+         ┌─────▼─────┐      ┌─────▼─────┐  ┌─────▼─────┐      ┌─────▼─────┐
+         │    API    │      │  Homepage │  │ Portainer │      │   n8n     │
+         │   :8000   │      │   :3000   │  │   :9000   │      │   :5678   │
+         │  pública  │      │  privado  │  │  privado  │      │  privado  │
+         └───────────┘      └───────────┘  └───────────┘      └───────────┘
+                                                              ┌───────────┐
+                                                              │Uptime Kuma│
+                                                              │   :3001   │
+                                                              │  privado  │
+                                                              └───────────┘
 ```
 
 ## Arquitectura Docker
@@ -70,6 +81,7 @@ Todos los contenedores activos están conectados únicamente a `homelab`. Las re
 
 | Nombre | IP en homelab | Puertos expuestos |
 |--------|---------------|-------------------|
+| api | 172.22.0.x | 8000 |
 | homepage | 172.22.0.2 | 3000 |
 | portainer | 172.22.0.3 | 9000 |
 | uptime-kuma | 172.22.0.4 | 3001 |
@@ -78,6 +90,8 @@ Todos los contenedores activos están conectados únicamente a `homelab`. Las re
 ### Volúmenes
 
 Todos los datos persistentes usan bind mounts desde `~/homelab-data/<servicio>/` a rutas dentro del contenedor. No se usan named volumes de Docker.
+
+La API no necesita almacenamiento persistente, solo el archivo `.env` en `~/homelab-data/api/`.
 
 ### Acceso al socket Docker
 
@@ -181,10 +195,12 @@ n8n
 
 ## Acceso a servicios
 
-| Origen | Homepage | Portainer | n8n | Uptime Kuma |
-|--------|:--------:|:---------:|:---:|:-----------:|
-| LAN (192.168.1.0/24) | ✅ | ❌ | ❌ | ❌ |
-| Tailscale | ✅ | ✅ | ✅ | ✅ |
-| Internet | ❌ | ❌ | ❌ | ❌ |
+| Origen | API | Homepage | Portainer | n8n | Uptime Kuma |
+|--------|:---:|:--------:|:---------:|:---:|:-----------:|
+| LAN (192.168.1.0/24) | ❌ | ✅ | ❌ | ❌ | ❌ |
+| Tailscale (tailnet) | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Internet (Funnel) | ✅ | ❌ | ❌ | ❌ | ❌ |
 
-Puerto 22 (SSH): solo accesible por clave, desde LAN o Tailscale.
+- Puerto 22 (SSH): solo accesible por clave, desde LAN o Tailscale.
+- La API se accede desde Internet vía Tailscale Funnel en `https://debian-server.taile532c7.ts.net/api`.
+- Los servicios administrativos usan Tailscale Serve (solo tailnet) o bind a LAN.

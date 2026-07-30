@@ -16,18 +16,26 @@ Convertir una PC antigua (AMD A4-4000, 4 GB RAM, SSD 120 GB) en una plataforma p
 
 ```
 Internet
+  ├─ Tailscale Funnel
+  │    └─ API pública (8000)       ⬥ https://debian-server.taile532c7.ts.net/api
+  │
   └─ Tailscale (100.119.176.84/32)
        └─ Servidor Debian 13 (192.168.1.50/24)
             ├─ SSH (22)              ⬥ Solo key, sin root
             ├─ Firewall DOCKER-USER  ⬥ Bloquea LAN no autorizada
             └─ Docker Engine (29.6.2)
+                 ├─ API (8000)            ⬥ FastAPI (público por Funnel)
                  ├─ Portainer (9000)      ⬥ Administración de contenedores
                  ├─ Homepage (3000)       ⬥ Dashboard de servicios
                  ├─ n8n (5678)            ⬥ Automatización low-code
                  └─ Uptime Kuma (3001)    ⬥ Monitoreo de uptime
 ```
 
-Todos los servicios comparten la red `homelab` (external: true, 172.22.0.0/16). No hay reverse proxy ni SSL configurado aún. El acceso externo es exclusivamente por Tailscale.
+Todos los servicios comparten la red `homelab` (external: true, 172.22.0.0/16). No hay reverse proxy ni SSL configurado aún.
+
+El acceso externo:
+- **Privado**: Tailscale (tailnet) para servicios administrativos
+- **Público**: Tailscale Funnel para la API (`https://debian-server.taile532c7.ts.net/api`)
 
 ## Estructura de carpetas
 
@@ -58,6 +66,12 @@ Todos los servicios comparten la red `homelab` (external: true, 172.22.0.0/16). 
 │   ├── fotos/
 │   └── screenshots/
 └── compose/                    ← Archivos Docker Compose
+    ├── api/
+    │   ├── Dockerfile
+    │   ├── .env.example
+    │   ├── compose.yaml
+    │   └── app/
+    │       └── main.py         ← FastAPI (público por Tailscale Funnel)
     ├── firewall/
     │   ├── restore-docker-user.sh       ← Script de restauración del firewall
     │   └── docker-user-restore.service  ← Systemd service unit
@@ -75,16 +89,18 @@ Todos los servicios comparten la red `homelab` (external: true, 172.22.0.0/16). 
 
 ## Servicios instalados
 
-| Servicio   | Imagen                              | Puerto   | Estado       |
-|------------|-------------------------------------|----------|--------------|
-| Portainer  | portainer/portainer-ce:latest       | 9000     | Up           |
-| Homepage   | ghcr.io/gethomepage/homepage:latest | 3000     | Up (healthy) |
-| n8n        | docker.n8n.io/n8nio/n8n:latest      | 5678     | Up           |
-| Uptime Kuma| louislam/uptime-kuma:latest         | 3001     | Up (healthy) |
+| Servicio   | Imagen                              | Puerto   | Estado       | Acceso       |
+|------------|-------------------------------------|----------|--------------|--------------|
+| API        | build local (Dockerfile)            | 8000     | —            | Público      |
+| Portainer  | portainer/portainer-ce:latest       | 9000     | Up           | Tailnet/LAN  |
+| Homepage   | ghcr.io/gethomepage/homepage:latest | 3000     | Up (healthy) | Tailnet/LAN  |
+| n8n        | docker.n8n.io/n8nio/n8n:latest      | 5678     | Up           | Tailnet      |
+| Uptime Kuma| louislam/uptime-kuma:latest         | 3001     | Up (healthy) | Tailnet      |
 
 ## Puertos utilizados
 
 - 22: SSH (solo key, sin password)
+- 8000: API (localhost only, expuesta por Tailscale Funnel)
 - 3000: Homepage (dashboard)
 - 3001: Uptime Kuma (monitoreo)
 - 5678: n8n (automatización)
@@ -96,6 +112,7 @@ Todos los datos persistentes viven bajo `/home/administrador/homelab-data/`:
 
 | Servicio   | Ruta                                           |
 |------------|-------------------------------------------------|
+| API        | ~/homelab-data/api (solo .env)                  |
 | Portainer  | ~/homelab-data/portainer                        |
 | Homepage   | ~/homelab-data/homepage                         |
 | n8n        | ~/homelab-data/n8n                              |
@@ -115,6 +132,13 @@ Convención: `~/homelab-data/<nombre-servicio>/`
 8. Registrar el servicio en `compose/homepage/services.yaml`
 9. Agregar entrada en 06-servicios.md
 10. No exponer puertos innecesarios
+
+## Exposición pública
+
+- **Tailscale Funnel**: solo para APIs/servicios públicos
+- **Tailscale Serve**: para paneles administrativos (privado, solo tailnet)
+- No exponer Portainer, Homepage, n8n ni Uptime Kuma por Funnel
+- Los bind mounts a `localhost` (127.0.0.1) evitan exposición a LAN
 
 ## Firewall
 
@@ -209,12 +233,12 @@ No modificar los archivos de backup sin entender el flujo completo (stop de cont
 - [x] SSH hardening — solo key auth, sin root, sin X11
 - [x] Firewall (DOCKER-USER) — bloqueo de LAN no autorizada
 - [x] Sistema de backups automáticos
-- [ ] Cloudflare Tunnel — publicación segura de servicios
+- [x] Tailscale Funnel — publicación segura de servicios sin abrir puertos
+- [x] API pública (FastAPI) — `GET /api`, `GET /api/health`
 - [ ] Reverse proxy (Traefik o Nginx Proxy Manager) — TLS, dominios
 - [ ] OpenCode — agente de IA local
 - [ ] Base de datos (PostgreSQL, SQLite)
 - [ ] Monitoreo y alertas (Prometheus + Grafana?)
-- [ ] APIs y servicios propios desplegados como contenedores
 - [ ] Posible ampliación de RAM a 8 GB
 
 ## Notas adicionales

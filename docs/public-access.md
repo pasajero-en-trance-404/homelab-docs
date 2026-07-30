@@ -25,7 +25,7 @@ Servidor Debian (192.168.1.50)
 Docker — container api:8000 (red homelab)
     |
     ▼
-FastAPI — GET /api, GET /api/health
+FastAPI — GET /api, GET /api/health, GET /api/status
 ```
 
 ### Flujo de tráfico
@@ -146,8 +146,11 @@ Actualmente no es posible vincular DuckDNS directamente a Tailscale Funnel porqu
 La API soporta el header `X-API-Key` para endpoints protegidos.
 
 Los endpoints públicos actuales no requieren key:
-- `GET /api`
 - `GET /api/health`
+
+Los endpoints protegidos requieren `X-API-Key`:
+- `GET /api`
+- `GET /api/status`
 
 Para agregar protección a un endpoint futuro:
 
@@ -175,6 +178,7 @@ docker compose -f compose/api/compose.yaml up -d
 - **Funnel expone el servicio a todo Internet** — no hay autenticación de Tailscale
 - No exponer paneles administrativos por Funnel
 - Mantener la API key fuera de git (`.env` está en `.gitignore`)
+- Montar `/var/run/docker.sock` (read-only) da acceso de lectura a la API de Docker — no exponer datos crudos
 - Monitorear logs del contenedor ante actividad sospechosa
 - Considerar rate limiting si el servicio recibe tráfico no deseado
 - Funnel no incluye WAF (Web Application Firewall) — eso sería una capa futura con reverse proxy

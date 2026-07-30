@@ -18,6 +18,20 @@ Todas las fechas en `YYYY-MM-DD`.
 - `compose/homepage/services.yaml` — API agregada al dashboard
 - `docs/architecture.md` — diagrama con Funnel, tabla de acceso público/privado
 
+## [2026-07-30] — Endpoint /api/status con monitoreo Docker
+
+### Agregado
+- Endpoint `GET /api/status` — estado de contenedores vía Docker socket (read-only)
+- `compose/api/main.py` — función `_docker_state()` consulta Docker API con Unix socket
+- Montaje de `/var/run/docker.sock:ro` en `compose/api/compose.yaml`
+- Detección dinámica del hostname con `socket.gethostname()`
+- Manejo de errores: si Docker socket no responde, estado "unknown"
+
+### Modificado
+- `docs/public-access.md` — documentación de `/api/status`, riesgos de Docker socket
+- `docs/architecture.md` — nota sobre Docker socket en la API
+- `CHANGELOG.md` — esta entrada
+
 ## [2026-07-29] — Firewall persistente y documentación
 
 ### Agregado

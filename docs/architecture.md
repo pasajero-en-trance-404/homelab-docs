@@ -91,7 +91,7 @@ Todos los contenedores activos están conectados únicamente a `homelab`. Las re
 
 Todos los datos persistentes usan bind mounts desde `~/homelab-data/<servicio>/` a rutas dentro del contenedor. No se usan named volumes de Docker.
 
-La API no necesita almacenamiento persistente, solo el archivo `.env` en `~/homelab-data/api/`.
+La API no necesita almacenamiento persistente, solo el archivo `.env` en `~/homelab-data/api/`. La API monta `/var/run/docker.sock` en modo read-only para consultar el estado de los contenedores.
 
 ### Acceso al socket Docker
 
@@ -204,3 +204,4 @@ n8n
 - Puerto 22 (SSH): solo accesible por clave, desde LAN o Tailscale.
 - La API se accede desde Internet vía Tailscale Funnel en `https://debian-server.taile532c7.ts.net/api`.
 - Los servicios administrativos se acceden directamente por Tailscale (IP/hostname del tailnet) o por bind a LAN.
+- El endpoint `GET /api/status` consulta el estado de los contenedores vía Docker socket (read-only) y requiere `X-API-Key`.

@@ -24,6 +24,7 @@ Internet
             ├─ SSH (22)              ⬥ Solo key, sin root
             ├─ Firewall DOCKER-USER  ⬥ Bloquea LAN no autorizada
             └─ Docker Engine (29.6.2)
+                 ├─ Traefik (:80/8080)     ⬥ Reverse proxy (host-based routing)
                  ├─ API (8000)            ⬥ FastAPI (público por Funnel)
                  ├─ Portainer (9000)      ⬥ Administración de contenedores
                  ├─ Homepage (3000)       ⬥ Dashboard de servicios
@@ -31,11 +32,12 @@ Internet
                  └─ Uptime Kuma (3001)    ⬥ Monitoreo de uptime
 ```
 
-Todos los servicios comparten la red `homelab` (external: true, 172.22.0.0/16). No hay reverse proxy ni SSL configurado aún.
+Todos los servicios comparten la red `homelab` (external: true, 172.22.0.0/16). Traefik actúa como reverse proxy central con host-based routing (`.homelab`). Sin TLS todavía (fase futura).
 
 El acceso externo:
 - **Privado**: Tailscale (tailnet) para servicios administrativos
 - **Público**: Tailscale Funnel para la API (`https://debian-server.taile532c7.ts.net/api`)
+- **Proxy interno**: Traefik en `127.0.0.1:80` enruta por hostname a cada servicio
 
 ## Estructura de carpetas
 
@@ -67,7 +69,8 @@ El acceso externo:
 │       └── .env.example        ← Template de configuración
 ├── docs/
 │   ├── architecture.md         ← Arquitectura general del homelab
-│   └── public-access.md        ← Acceso público (Tailscale Funnel + DuckDNS)
+│   ├── public-access.md        ← Acceso público (Tailscale Funnel + DuckDNS)
+│   └── traefik.md              ← Traefik reverse proxy
 ├── assets/
 │   ├── diagramas/
 │   ├── fotos/
@@ -89,15 +92,20 @@ El acceso externo:
     │   ├── .env                ← Variables de entorno
     │   └── compose.yaml
     ├── portainer/
-    │   └── compose.yaml
-    └── uptime-kuma/
-        └── compose.yaml
+│   └── compose.yaml
+├── traefik/
+│   ├── compose.yaml
+│   ├── traefik.yml
+│   └── .env.example
+└── uptime-kuma/
+    └── compose.yaml
 ```
 
 ## Servicios instalados
 
 | Servicio   | Imagen                              | Puerto   | Estado       | Acceso       |
 |------------|-------------------------------------|----------|--------------|--------------|
+| Traefik    | traefik:v3.7                        | 80/8080  | Up           | localhost     |
 | API        | build local (Dockerfile)            | 8000     | Up           | Público      |
 | Portainer  | portainer/portainer-ce:latest       | 9000     | Up           | Tailnet/LAN  |
 | Homepage   | ghcr.io/gethomepage/homepage:latest | 3000     | Up (healthy) | Tailnet/LAN  |
@@ -107,10 +115,12 @@ El acceso externo:
 ## Puertos utilizados
 
 - 22: SSH (solo key, sin password)
+- 80: Traefik HTTP (localhost only, host-based routing)
 - 8000: API (localhost only, expuesta por Tailscale Funnel)
 - 3000: Homepage (dashboard)
 - 3001: Uptime Kuma (monitoreo)
 - 5678: n8n (automatización)
+- 8080: Traefik dashboard (localhost only)
 - 9000: Portainer (administración)
 
 ## Ubicación de datos persistentes
@@ -120,6 +130,7 @@ Todos los datos persistentes viven bajo `/home/administrador/homelab-data/`:
 | Servicio   | Ruta                                           |
 |------------|-------------------------------------------------|
 | API        | ~/homelab-data/api (solo .env)                  |
+| Traefik    | ~/homelab-data/traefik                          |
 | Portainer  | ~/homelab-data/portainer                        |
 | Homepage   | ~/homelab-data/homepage                         |
 | n8n        | ~/homelab-data/n8n                              |
@@ -136,8 +147,9 @@ Convención: `~/homelab-data/<nombre-servicio>/`
 5. Conectar a la red externa `homelab`
 6. Usar bind mounts a `~/homelab-data/<nombre>/` para datos persistentes
 7. Si necesita variables de entorno, usar `.env` dentro de su carpeta
-8. Registrar el servicio en `compose/homepage/services.yaml`
-9. Agregar entrada en 06-servicios.md
+8. Agregar labels de Traefik para habilitar el routing automático
+9. Registrar el servicio en `compose/homepage/services.yaml`
+10. Agregar entrada en 06-servicios.md
 10. No exponer puertos innecesarios
 
 ## Exposición pública

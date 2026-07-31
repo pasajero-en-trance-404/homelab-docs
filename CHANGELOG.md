@@ -2,6 +2,27 @@
 
 Todas las fechas en `YYYY-MM-DD`.
 
+## [2026-07-31] — Traefik reverse proxy con host-based routing
+
+### Agregado
+- Servicio Traefik: `compose/traefik/` con compose.yaml, traefik.yml y .env.example
+- Traefik bindeado a `127.0.0.1:80` con Docker provider (`exposedByDefault: false`)
+- Dashboard Traefik en `traefik.homelab` (solo localhost:8080)
+- Labels Traefik en todos los servicios: api, homepage, portainer, n8n, uptime-kuma
+- Documentación: `docs/traefik.md` — arquitectura, funcionamiento, integración, guía de agregado
+
+### Modificado
+- `AGENTS.md` — diagrama con Traefik, tabla de servicios, puertos, árbol de directorios, data paths
+- `docs/architecture.md` — diagrama actualizado con Traefik, tabla de contenedores, acceso Traefik
+- `README.md` — Traefik en implementado y pendiente
+
+### Notas
+- Conviviencia: todos los puertos directos se mantienen
+- Tailscale Funnel sigue apuntando directamente a la API (sin cambios)
+- Routing: host-based (`*.homelab`), sin TLS aún
+- Sin modificación del firewall DOCKER-USER
+- Creado directorio `~/homelab-data/traefik/` para datos persistentes
+
 ## [2026-07-30] — Auditoría de documentación v1.0
 
 ### Corregido

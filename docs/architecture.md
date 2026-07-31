@@ -51,15 +51,20 @@
                ┌───────────────────┼──────────────┼───────────────────┐
                │                   │              │                   │
          ┌─────▼─────┐      ┌─────▼─────┐  ┌─────▼─────┐      ┌─────▼─────┐
-         │    API    │      │  Homepage │  │ Portainer │      │   n8n     │
-         │   :8000   │      │   :3000   │  │   :9000   │      │   :5678   │
-         │  pública  │      │  privado  │  │  privado  │      │  privado  │
-         └───────────┘      └───────────┘  └───────────┘      └───────────┘
-                                                              ┌───────────┐
-                                                              │Uptime Kuma│
-                                                              │   :3001   │
-                                                              │  privado  │
-                                                              └───────────┘
+         │  Traefik  │      │    API    │  │  Homepage │      │ Portainer │
+         │   :80     │      │   :8000   │  │   :3000   │      │   :9000   │
+         │  reverse  │      │  pública  │  │  privado  │      │  privado  │
+         │  proxy    │      └───────────┘  └───────────┘      └───────────┘
+         └─────┬─────┘                                            :5678
+               │ ┌──────────────────────────────────────┐      ┌───────────┐
+               ├─ Host(`api.homelab`)      → api:8000   │      │   n8n     │
+               ├─ Host(`homepage.homelab`) → homepage   │      │  privado  │
+               ├─ Host(`portainer.homelab`)→ portainer  │      └───────────┘
+               ├─ Host(`n8n.homelab`)      → n8n        │      ┌───────────┐
+               └─ Host(`uptime.homelab`)   → uptime-kuma│      │Uptime Kuma│
+                                                         │      │   :3001   │
+                    Routing: host-based (*.homelab)      │      │  privado  │
+                    Conviviencia: puertos directos activos│      └───────────┘
 ```
 
 ## Arquitectura Docker
@@ -81,10 +86,11 @@ Todos los contenedores activos están conectados únicamente a `homelab`. Las re
 
 | Nombre | IP en homelab | Puertos expuestos |
 |--------|---------------|-------------------|
-| api | 172.22.0.x | 8000 |
-| homepage | 172.22.0.2 | 3000 |
-| portainer | 172.22.0.3 | 9000 |
-| uptime-kuma | 172.22.0.4 | 3001 |
+| traefik | 172.22.0.x | 80, 8080 |
+| api | 172.22.0.4 | 8000 |
+| homepage | 172.22.0.6 | 3000 |
+| portainer | 172.22.0.2 | 9000 |
+| uptime-kuma | 172.22.0.3 | 3001 |
 | n8n | 172.22.0.5 | 5678 |
 
 ### Volúmenes
@@ -97,6 +103,7 @@ La API no necesita almacenamiento persistente, solo el archivo `.env` en `~/home
 
 - Portainer: `docker.sock` en modo **rw** (gestión de contenedores)
 - Homepage: `docker.sock` en modo **ro** (dashboard de estado)
+- Traefik: `docker.sock` en modo **ro** (auto-descubrimiento de contenedores vía Docker provider)
 
 ---
 
@@ -204,4 +211,5 @@ n8n
 - Puerto 22 (SSH): solo accesible por clave, desde LAN o Tailscale.
 - La API se accede desde Internet vía Tailscale Funnel en `https://debian-server.taile532c7.ts.net/api`.
 - Los servicios administrativos se acceden directamente por Tailscale (IP/hostname del tailnet) o por bind a LAN.
+- Alternativamente, todos los servicios (excepto Traefik) son accesibles vía Traefik en `http://127.0.0.1:80` con el header `Host: <servicio>.homelab` (ver `docs/traefik.md`).
 - El endpoint `GET /api/status` consulta el estado de los contenedores vía Docker socket (read-only) y requiere `X-API-Key`.

@@ -56,6 +56,7 @@ Todo lo que se instala, configura o modifica queda documentado.
 | 09-comandos-utiles.md | Comandos de referencia |
 | docs/architecture.md | Arquitectura general del homelab |
 | docs/public-access.md | Acceso público (Tailscale Funnel + DuckDNS) |
+| docs/traefik.md | Traefik reverse proxy |
 | CHANGELOG.md | Historial de cambios del proyecto |
 | AGENTS.md | Contexto para agentes de IA |
 
@@ -77,6 +78,7 @@ Todo lo que se instala, configura o modifica queda documentado.
 - [x] SSH hardening — Solo clave, sin root, sin X11
 - [x] Firewall persistente (DOCKER-USER) — Bloqueo LAN no autorizada
 - [x] Backups automáticos — Diarios con retención
+- [x] Traefik — Reverse proxy con host-based routing para todos los servicios
 
 ### Servicios públicos
 
@@ -86,7 +88,7 @@ Todo lo que se instala, configura o modifica queda documentado.
 
 ### Pendiente
 
-- [ ] Reverse proxy (Traefik / Nginx Proxy Manager) — TLS, dominios
+- [ ] TLS/SSL (Let's Encrypt via DuckDNS + Traefik)
 - [ ] OpenCode — Agente de IA local
 - [ ] Base de datos (PostgreSQL / SQLite)
 - [ ] Monitoreo y alertas (Prometheus + Grafana)

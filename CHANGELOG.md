@@ -2,6 +2,19 @@
 
 Todas las fechas en `YYYY-MM-DD`.
 
+## [2026-07-31] — Homelab Rebuild v1.1 CLOSED
+
+### Cierre oficial
+- Estado final: **v1.1.0 CLOSED** — infraestructura reproducible lista para reconstrucción futura
+- Corrección de URL del repositorio en documentación y units: `anomalyco/homelab-docs` → `pasajero-en-trance-404/homelab-docs`
+- README: sección "Estado del proyecto" con resumen de qué vive en GitHub vs. fuera de GitHub
+
+### Validación final
+- Verificación de seguridad: sin `.env`, claves privadas, tokens ni contraseñas en el repositorio
+- Únicos secretos en git: `secrets/vault/*.gpg` cifrados con la clave GPG `E13C74AC1F9FCC36`
+- Backup privado confirmado en `~/homelab-backups/gpg/` (clave privada + revocación)
+- Tag `v1.1.0` publicado
+
 ## [2026-07-31] — Homelab Rebuild v1.1: infraestructura reproducible
 
 ### Agregado

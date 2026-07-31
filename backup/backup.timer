@@ -1,6 +1,6 @@
 [Unit]
 Description=Daily homelab backup at 03:00
-Documentation=https://github.com/anomalyco/homelab-docs
+Documentation=https://github.com/pasajero-en-trance-404/homelab-docs
 Requires=backup.service
 
 [Timer]

@@ -118,8 +118,41 @@ El objetivo es que el homelab sea reconstruible desde cero en **< 30 minutos**: 
 ```bash
 # Reconstruir todo desde Debian 13 limpio
 sudo apt install -y git curl
-git clone https://github.com/anomalyco/homelab-docs.git
+git clone https://github.com/pasajero-en-trance-404/homelab-docs.git
 cd homelab-docs
 cp bootstrap/vars.env.example bootstrap/vars.env   # ajustar
 sudo ./bootstrap/bootstrap.sh
 ```
+
+---
+
+## ✅ Estado del proyecto
+
+### Homelab Rebuild v1.1 — Estado: **CLOSED** (2026-07-31)
+
+v1.1.0 convierte el homelab de documentación en **infraestructura reproducible**:
+
+- ✅ **Bootstrap reproducible** — `bootstrap/bootstrap.sh` idempotente (reconstruye todo en <30 min)
+- ✅ **Ansible progresivo** — esqueleto con roles y playbook (migración paso a paso)
+- ✅ **Vault de secretos cifrado** — `secrets/vault/*.gpg` versionados en git
+- ✅ **Recuperación ante desastre** — `docs/dr.md` con runbook completo
+- ✅ **Documentación completa** — arquitectura, accesos, backups, troubleshooting
+
+### Qué existe en GitHub
+
+| Categoría | Archivos |
+|-----------|----------|
+| Código | `compose/`, `bootstrap/`, `scripts/`, `ansible/` |
+| Infraestructura | Docker Compose, systemd units, firewall, playbooks |
+| Documentación | `README.md`, `AGENTS.md`, `docs/`, `0X-*.md` |
+| Secretos | `secrets/vault/*.gpg` (cifrados con clave GPG) |
+
+### Qué existe FUERA de GitHub (backup privado)
+
+| Categoría | Ubicación |
+|-----------|-----------|
+| Clave privada GPG | `~/homelab-backups/gpg/homelab-gpg-private-key.asc` |
+| Certificado de revocación | `~/homelab-backups/gpg/homelab-gpg-revocation.rev` |
+| Datos persistentes | `~/homelab-data/` (respaldados en `~/backups/`) |
+
+> ⚠️ La clave privada GPG y los datos persistentes **nunca** se suben a GitHub. Sin la clave privada, el vault de secretos es irrecuperable.

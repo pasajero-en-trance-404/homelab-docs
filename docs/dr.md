@@ -36,7 +36,7 @@
 
 ```bash
 sudo apt update && sudo apt install -y git curl
-git clone https://github.com/anomalyco/homelab-docs.git ~/homelab-docs
+git clone https://github.com/pasajero-en-trance-404/homelab-docs.git ~/homelab-docs
 ```
 
 ### Fase 2 — Configurar secrets (2 min)

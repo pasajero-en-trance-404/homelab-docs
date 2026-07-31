@@ -43,17 +43,20 @@ Backup automático diario de los datos del homelab:
 
 ## Exclusiones
 
-El script excluye los siguientes directorios del backup:
+El script excluye los siguientes archivos y directorios del backup:
 
 | Exclusión | Motivo |
 |-----------|--------|
 | `homelab-docs/.git` | Repositorio remoto ya existe en GitHub |
-| `homelab-docs/compose/n8n/.env` | Contiene credenciales |
+| `*.env` (cualquier `.env` de `homelab-data/` y `homelab-docs/`) | Contienen credenciales (API, n8n) |
+| `homelab-data/duckdns/duckdns.conf` | Contiene el token de DuckDNS |
 | `homelab-data/portainer/certs` | Certificados efímeros regenerables |
 | `homelab-data/portainer/bin` | Binarios descargables |
 | `homelab-data/portainer/compose` | Stacks de Portainer (en git) |
 | `homelab-data/portainer/tls` | Certificados TLS regenerables |
 | `homelab-data/portainer/chisel` | Tunnel efímero |
+
+Nota: antes del 30-07-2026 los backups incluían `compose/n8n/.env` y `compose/api/.env`. Los backups afectados fueron eliminados y regenerados sin credenciales.
 
 ## Instalación
 

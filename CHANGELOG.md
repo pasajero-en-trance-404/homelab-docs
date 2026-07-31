@@ -63,8 +63,10 @@ Todas las fechas en `YYYY-MM-DD`.
 - `AGENTS.md` — arquitectura actualizada con Funnel + API, tabla de servicios con columna de acceso, sección de exposición pública, roadmap
 - `README.md` — sección Servicios públicos, roadmap actualizado
 - `06-servicios.md` — API agregada a tabla de servicios y puertos
-- `compose/homepage/services.yaml` — API agregada al dashboard
 - `docs/architecture.md` — diagrama con Funnel, tabla de acceso público/privado
+
+### Corregido
+- `compose/homepage/services.yaml` **no fue modificado** en esta fase; la API no se agregó al dashboard de Homepage (solo 4 de 6 servicios visibles)
 
 ## [2026-07-30] — Endpoint /api/status con monitoreo Docker
 

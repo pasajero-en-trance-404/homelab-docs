@@ -97,7 +97,7 @@ Todos los contenedores activos están conectados únicamente a `homelab`. Las re
 
 Todos los datos persistentes usan bind mounts desde `~/homelab-data/<servicio>/` a rutas dentro del contenedor. No se usan named volumes de Docker.
 
-La API no necesita almacenamiento persistente, solo el archivo `.env` en `~/homelab-data/api/`. La API monta `/var/run/docker.sock` en modo read-only para consultar el estado de los contenedores.
+La API no necesita almacenamiento persistente, solo el archivo `.env` en `compose/api/.env`. La API monta `/var/run/docker.sock` en modo read-only para consultar el estado de los contenedores.
 
 ### Acceso al socket Docker
 

@@ -71,7 +71,8 @@ log "Creating backup: $(basename "$BACKUP_FILE")"
 
 tar -czf "$BACKUP_FILE" \
     --exclude='homelab-docs/.git' \
-    --exclude='homelab-docs/compose/n8n/.env' \
+    --exclude='*.env' \
+    --exclude='homelab-data/duckdns/duckdns.conf' \
     --exclude='homelab-data/portainer/certs' \
     --exclude='homelab-data/portainer/bin' \
     --exclude='homelab-data/portainer/compose' \

@@ -43,6 +43,7 @@ El acceso externo:
 
 ```
 ~/homelab-docs/                 ← Este repositorio (git)
+├── .gitignore                  ← Exclusiones de git
 ├── AGENTS.md                   ← Contexto para agentes de IA
 ├── README.md                   ← Documentación principal
 ├── CHANGELOG.md                ← Historial de cambios
@@ -70,7 +71,8 @@ El acceso externo:
 ├── docs/
 │   ├── architecture.md         ← Arquitectura general del homelab
 │   ├── public-access.md        ← Acceso público (Tailscale Funnel + DuckDNS)
-│   └── traefik.md              ← Traefik reverse proxy
+│   ├── traefik.md              ← Traefik reverse proxy
+│   └── api.md                  ← Documentación de la API pública
 ├── assets/
 │   ├── diagramas/
 │   ├── fotos/
@@ -78,10 +80,16 @@ El acceso externo:
 └── compose/                    ← Archivos Docker Compose
     ├── api/
     │   ├── Dockerfile
+    │   ├── .env                 ← Credenciales (no versionado)
     │   ├── .env.example
     │   ├── compose.yaml
     │   └── app/
-    │       └── main.py         ← FastAPI (público por Tailscale Funnel)
+    │       ├── main.py          ← FastAPI (público por Tailscale Funnel)
+    │       ├── util.py          ← Key check, helpers Docker, HOSTNAME, SERVICES
+    │       └── routers/
+    │           ├── __init__.py
+    │           ├── public.py    ← Endpoints públicos
+    │           └── private.py   ← Endpoints privados (X-API-Key)
     ├── firewall/
     │   ├── restore-docker-user.sh       ← Script de restauración del firewall
     │   └── docker-user-restore.service  ← Systemd service unit
@@ -89,16 +97,16 @@ El acceso externo:
     │   ├── compose.yaml
     │   └── services.yaml       ← Config de Homepage dashboard
     ├── n8n/
-    │   ├── .env                ← Variables de entorno
+    │   ├── .env                ← Variables de entorno (no versionado)
     │   └── compose.yaml
     ├── portainer/
-│   └── compose.yaml
-├── traefik/
-│   ├── compose.yaml
-│   ├── traefik.yml
-│   └── .env.example
-└── uptime-kuma/
-    └── compose.yaml
+    │   └── compose.yaml
+    ├── traefik/
+    │   ├── compose.yaml
+    │   ├── traefik.yml
+    │   └── .env.example
+    └── uptime-kuma/
+        └── compose.yaml
 ```
 
 ## Servicios instalados
@@ -129,14 +137,14 @@ Todos los datos persistentes viven bajo `/home/administrador/homelab-data/`:
 
 | Servicio   | Ruta                                           |
 |------------|-------------------------------------------------|
-| API        | ~/homelab-data/api (solo .env)                  |
+| API        | compose/api/.env (sin datos persistentes)       |
 | Traefik    | ~/homelab-data/traefik                          |
 | Portainer  | ~/homelab-data/portainer                        |
 | Homepage   | ~/homelab-data/homepage                         |
 | n8n        | ~/homelab-data/n8n                              |
 | Uptime Kuma| ~/homelab-data/uptime-kuma                      |
 
-Convención: `~/homelab-data/<nombre-servicio>/`
+Convención: `~/homelab-data/<nombre-servicio>/` (excepción: API, que solo usa `.env` en su carpeta del repo).
 
 ## Convenciones para agregar nuevos servicios
 

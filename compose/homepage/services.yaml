@@ -1,12 +1,16 @@
 - Infrastructure:
     - Homepage:
         href: http://192.168.1.50:3000
+        icon: homepage.png
 
     - Portainer:
         href: http://192.168.1.50:9000
+        icon: portainer.png
 
     - Uptime Kuma:
         href: http://192.168.1.50:3001
+        icon: uptime-kuma.png
 
     - n8n:
         href: http://192.168.1.50:5678
+        icon: n8n.png

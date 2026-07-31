@@ -1,0 +1,23 @@
+# Rol: verify
+#
+# ESTADO: ACTIVO (usado por playbooks/site.yml, tag "verify")
+# Verifica que los servicios esperados estén corriendo.
+---
+- name: Listar contenedores corriendo
+  ansible.builtin.command: docker ps --format '{{ "{{.Names}}" }}'
+  register: running_containers
+  changed_when: false
+
+- name: Verificar servicios esperados
+  ansible.builtin.assert:
+    that:
+      - item in running_containers.stdout_lines
+    success_msg: "OK: {{ item }} is running"
+    fail_msg: "FAIL: {{ item }} is NOT running"
+  loop:
+    - traefik
+    - api
+    - homepage
+    - portainer
+    - n8n
+    - uptime-kuma

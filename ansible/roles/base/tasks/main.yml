@@ -1,0 +1,21 @@
+# Rol: base
+#
+# ESTADO: PLANIFICADO (no activo)
+# Migración progresiva desde bootstrap.sh, paso [1/9].
+#
+# Pendiente de migrar:
+#   - Instalar paquetes base (curl, git, gnupg, iptables, openssl...)
+#
+# Referencia actual (fuente de verdad):
+#   bootstrap/bootstrap.sh → función base_packages()
+---
+- name: Instalar paquetes base
+  ansible.builtin.apt:
+    name:
+      - curl
+      - git
+      - gnupg
+      - iptables
+      - openssl
+    state: present
+    update_cache: true

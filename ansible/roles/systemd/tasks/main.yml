@@ -1,0 +1,46 @@
+# Rol: systemd
+#
+# ESTADO: PLANIFICADO (no activo)
+# Migración progresiva desde bootstrap.sh, paso [6/9].
+#
+# Pendiente de migrar:
+#   - backup.service + backup.timer
+#   - duckdns.service + duckdns.timer
+#   - Copiar scripts duckdns.sh a /usr/local/bin
+#
+# Referencia actual (fuente de verdad):
+#   bootstrap/bootstrap.sh → función install_systemd_units()
+#   backup/ y scripts/duckdns/
+---
+- name: Instalar units de backup
+  ansible.builtin.copy:
+    src: "{{ homelab_repo | default('/home/administrador/homelab-docs') }}/backup/{{ item }}"
+    dest: "/etc/systemd/system/{{ item }}"
+    mode: "0644"
+  loop:
+    - backup.service
+    - backup.timer
+
+- name: Instalar units de duckdns
+  ansible.builtin.copy:
+    src: "{{ homelab_repo | default('/home/administrador/homelab-docs') }}/scripts/duckdns/{{ item }}"
+    dest: "/etc/systemd/system/{{ item }}"
+    mode: "0644"
+  loop:
+    - duckdns.service
+    - duckdns.timer
+
+- name: Copiar script duckdns
+  ansible.builtin.copy:
+    src: "{{ homelab_repo | default('/home/administrador/homelab-docs') }}/scripts/duckdns/duckdns.sh"
+    dest: /usr/local/bin/duckdns.sh
+    mode: "0755"
+
+- name: Habilitar timers
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    enabled: true
+    daemon_reload: true
+  loop:
+    - backup.timer
+    - duckdns.timer

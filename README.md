@@ -57,6 +57,10 @@ Todo lo que se instala, configura o modifica queda documentado.
 | docs/architecture.md | Arquitectura general del homelab |
 | docs/public-access.md | Acceso público (Tailscale Funnel + DuckDNS) |
 | docs/traefik.md | Traefik reverse proxy |
+| docs/dr.md | Runbook de disaster recovery (v1.1) |
+| bootstrap/ | Script idempotente de reconstrucción |
+| ansible/ | Migración progresiva a IaC (esqueleto) |
+| secrets/ | Vault GPG de secretos cifrados |
 | CHANGELOG.md | Historial de cambios del proyecto |
 | AGENTS.md | Contexto para agentes de IA |
 
@@ -85,6 +89,10 @@ Todo lo que se instala, configura o modifica queda documentado.
 - [x] Tailscale Funnel — Exposición pública de la API sin abrir puertos
 - [x] API pública (FastAPI) — endpoints públicos (`/`, `/api/health`, `/api/time`, `/api/ip`, `/api/request`, `/api/server`, `/api/uuid`) + privados (`/api`, `/api/status`, `/api/containers`)
 - [x] DuckDNS — Dominio dinámico con actualización automática via systemd timer
+- [x] Bootstrap reproducible — `bootstrap/bootstrap.sh` idempotente
+- [~] Ansible — esqueleto creado, migración progresiva en curso
+- [x] Secrets GPG vault — `secrets/` con encrypt/decrypt
+- [x] Runbook DR — `docs/dr.md` (reconstrucción en <30 min)
 
 ### Pendiente
 
@@ -93,6 +101,7 @@ Todo lo que se instala, configura o modifica queda documentado.
 - [ ] Base de datos (PostgreSQL / SQLite)
 - [ ] Monitoreo y alertas (Prometheus + Grafana)
 - [ ] Ampliación de RAM a 8 GB
+- [ ] Backup a disco externo USB / destino remoto
 
 ---
 
@@ -101,3 +110,16 @@ Todo lo que se instala, configura o modifica queda documentado.
 > Documentar primero. Instalar después.
 
 Cada cambio realizado en el servidor queda registrado en este repositorio para poder reconstruir el proyecto desde cero.
+
+## 🔄 Reproducibilidad (v1.1)
+
+El objetivo es que el homelab sea reconstruible desde cero en **< 30 minutos**: reinstalar Debian, clonar este repo y ejecutar `bootstrap/bootstrap.sh`. Ver `docs/dr.md` para el runbook completo.
+
+```bash
+# Reconstruir todo desde Debian 13 limpio
+sudo apt install -y git curl
+git clone https://github.com/anomalyco/homelab-docs.git
+cd homelab-docs
+cp bootstrap/vars.env.example bootstrap/vars.env   # ajustar
+sudo ./bootstrap/bootstrap.sh
+```

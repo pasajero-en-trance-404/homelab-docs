@@ -1,0 +1,61 @@
+---
+# Homelab site playbook (v1.1)
+#
+# Estrategia progresiva:
+#   - Fase 1 (actual): ejecuta bootstrap/bootstrap.sh como fuente de verdad única.
+#   - Fase 2+       : cada rol de roles/ reemplaza de a un paso del script,
+#                     manteniendo bootstrap.sh como referencia hasta migrar todo.
+#
+# Uso:
+#   ansible-playbook -i inventory/hosts.yml playbooks/site.yml
+#   ansible-playbook playbooks/site.yml --tags bootstrap
+#   ansible-playbook playbooks/site.yml --tags verify
+
+- name: Homelab bootstrap
+  hosts: debian-server
+  gather_facts: true
+
+  vars:
+    repo_dir: "{{ homelab_repo | default('/home/administrador/homelab-docs') }}"
+
+  tasks:
+    - name: Bootstrap server (bootstrap.sh)
+      ansible.builtin.script:
+        cmd: "{{ repo_dir }}/bootstrap/bootstrap.sh"
+      args:
+        executable: bash
+      register: bootstrap_result
+      changed_when: "'already' not in bootstrap_result.stdout"
+      tags: [bootstrap]
+      become: true
+
+    - name: Show bootstrap output
+      ansible.builtin.debug:
+        var: bootstrap_result.stdout_lines
+      tags: [bootstrap]
+
+- name: Verify deployment
+  hosts: debian-server
+  gather_facts: false
+
+  tasks:
+    - name: Check expected containers are running
+      ansible.builtin.shell: docker ps --format '{{ "{{.Names}}" }}'
+      register: running_containers
+      changed_when: false
+      tags: [verify]
+
+    - name: Verify expected services
+      ansible.builtin.assert:
+        that:
+          - item in running_containers.stdout_lines
+        success_msg: "OK: {{ item }} is running"
+        fail_msg: "FAIL: {{ item }} is NOT running"
+      loop:
+        - traefik
+        - api
+        - homepage
+        - portainer
+        - n8n
+        - uptime-kuma
+      tags: [verify]

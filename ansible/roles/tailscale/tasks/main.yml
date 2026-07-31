@@ -1,0 +1,29 @@
+# Rol: tailscale
+#
+# ESTADO: PLANIFICADO (no activo)
+# Migración progresiva desde bootstrap.sh, paso [3/9].
+#
+# Pendiente de migrar:
+#   - Instalación de Tailscale (script oficial)
+#   - tailscale up con TS_AUTH_KEY efímera
+#   - Habilitación de Funnel para la API
+#
+# Referencia actual (fuente de verdad):
+#   bootstrap/bootstrap.sh → función install_tailscale()
+#
+# Nota: la instalación usa el script oficial y requiere acceso root.
+---
+- name: Instalar Tailscale
+  ansible.builtin.shell:
+    cmd: curl -fsSL https://tailscale.com/install.sh | sh
+    creates: /usr/bin/tailscale
+
+- name: Autenticar Tailscale con auth key
+  ansible.builtin.command: tailscale up --authkey={{ ts_auth_key }} --hostname={{ ts_hostname | default('debian-server') }}
+  when: ts_auth_key is defined and ts_auth_key | length > 0
+  changed_when: false
+
+- name: Habilitar Funnel para la API
+  ansible.builtin.command: tailscale funnel --bg {{ api_port | default('8000') }}
+  when: ts_funnel is defined and ts_funnel
+  changed_when: false

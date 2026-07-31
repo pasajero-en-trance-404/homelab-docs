@@ -213,3 +213,41 @@ n8n
 - Los servicios administrativos se acceden directamente por Tailscale (IP/hostname del tailnet) o por bind a LAN.
 - Alternativamente, todos los servicios (excepto Traefik) son accesibles vía Traefik en `http://127.0.0.1:80` con el header `Host: <servicio>.homelab` (ver `docs/traefik.md`).
 - El endpoint `GET /api/status` consulta el estado de los contenedores vía Docker socket (read-only) y requiere `X-API-Key`. Ver `docs/public-access.md` para la lista completa de endpoints.
+
+---
+
+## Reproducibilidad (v1.1)
+
+### Componentes de reconstrucción
+
+```
+Debian 13 limpio
+  └─ git clone homelab-docs
+       └─ sudo ./bootstrap/bootstrap.sh        (idempotente)
+            ├─ 1. Paquetes base (curl, git, gnupg, iptables, openssl)
+            ├─ 2. Docker Engine + Compose plugin (repo oficial)
+            ├─ 3. Tailscale (+ Funnel para API)
+            ├─ 4. Red externa homelab (172.22.0.0/16)
+            ├─ 5. Directorios de datos (~/homelab-data/)
+            ├─ 6. Systemd units (backup, duckdns, firewall)
+            ├─ 7. Firewall DOCKER-USER
+            ├─ 8. Deploy de los 6 stacks compose
+            └─ 9. Verificación
+  └─ Restaurar ~/homelab-data/ desde backup
+  └─ Descifrar secrets vault (secrets/decrypt.sh)
+```
+
+### Separación configuración vs datos vs secretos
+
+| Capa | Ubicación | Versionado en git |
+|------|-----------|:-----------------:|
+| Configuración (compose, systemd, scripts) | Repo `homelab-docs/` | ✅ |
+| Datos persistentes | `~/homelab-data/` | ❌ (desde backup) |
+| Secretos | `secrets/vault/*.gpg` (cifrado) | ✅ |
+
+### Migración progresiva a Ansible
+
+- Fase 1 (actual): `bootstrap.sh` = fuente de verdad. Ansible lo invoca vía `script` module.
+- Fase 2+: cada rol (`base`, `docker`, `tailscale`, `firewall`, `compose`, `systemd`) migra un paso. Ver `ansible/README.md`.
+
+Ver `docs/dr.md` para el runbook completo de disaster recovery.

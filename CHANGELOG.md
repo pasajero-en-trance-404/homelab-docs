@@ -2,7 +2,31 @@
 
 Todas las fechas en `YYYY-MM-DD`.
 
-## [2026-07-31] — API pública v1.0 completa (endpoints públicos y privados)
+## [2026-07-31] — Homelab Rebuild v1.1: infraestructura reproducible
+
+### Agregado
+- `bootstrap/bootstrap.sh` — script idempotente que reconstruye todo el homelab desde Debian 13 limpio (paquetes base, Docker, Tailscale, red, systemd units, firewall, deploy de los 6 stacks)
+- `bootstrap/vars.env.example` — configuración del bootstrap (usuario, red, TS_AUTH_KEY, GPG_RECIPIENT)
+- `bootstrap/README.md` — documentación del bootstrap
+- `secrets/` — vault GPG: `manifest`, `encrypt.sh`, `decrypt.sh`, `vault/` (archivos `.gpg` versionados) y README
+- `ansible/` — esqueleto: `ansible.cfg`, `inventory/hosts.yml`, `playbooks/site.yml`, roles `base`, `docker`, `tailscale`, `firewall`, `compose`, `systemd` (planificados) y `verify` (activo), `requirements.yml`, README
+- `docs/dr.md` — runbook completo de disaster recovery con objetivo <30 min
+
+### Modificado
+- `README.md` — sección de estructura v1.1, roadmap con "bootstrap" y "Ansible" completados parcialmente
+- `AGENTS.md` — estructura de carpetas actualizada con bootstrap/, ansible/, secrets/
+- `docs/architecture.md` — sección de reproducibilidad y estructura de código
+- `compose/homepage/services.yaml` — sincronizado con el desplegado (agrega iconos)
+
+### Corregido
+- `compose/traefik/compose.yaml` — `environment:` vacío rompía la validación de `docker compose config`
+
+### Estrategia
+- Fase 1: `bootstrap.sh` como fuente de verdad única; Ansible lo ejecuta vía módulo `script`
+- Fase 2+: migración progresiva paso a paso hacia roles Ansible
+- Secretos: `.env` y `duckdns.conf` cifrados en `secrets/vault/*.gpg` (nunca en texto plano)
+
+
 
 ### Agregado
 - Reestructuración en routers: `app/routers/public.py` y `app/routers/private.py`, lógica compartida en `app/util.py`

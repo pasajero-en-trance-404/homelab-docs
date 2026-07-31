@@ -62,6 +62,25 @@ El acceso externo:
 │   ├── backup.service          ← Systemd service unit
 │   ├── backup.timer            ← Systemd timer (diario 03:00)
 │   └── README.md               ← Documentación del sistema de backups
+├── bootstrap/
+│   ├── bootstrap.sh            ← Script idempotente de reconstrucción (v1.1)
+│   ├── vars.env.example        ← Configuración del bootstrap
+│   └── README.md               ← Documentación del bootstrap
+├── ansible/
+│   ├── ansible.cfg             ← Config de Ansible
+│   ├── inventory/
+│   │   └── hosts.yml           ← Host debian-server
+│   ├── playbooks/
+│   │   └── site.yml            ← Ejecuta bootstrap.sh + verificación
+│   ├── roles/                  ← Migración progresiva (base, docker, tailscale, firewall, compose, systemd, verify)
+│   ├── requirements.yml        ← Colecciones community.docker/general
+│   └── README.md               ← Estrategia progresiva de migración
+├── secrets/
+│   ├── manifest                ← Mapa de secretos → vault .gpg
+│   ├── encrypt.sh              ← Cifra secretos al vault
+│   ├── decrypt.sh              ← Restaura secretos desde el vault
+│   ├── vault/                  ← Archivos .gpg versionados en git
+│   └── README.md               ← Documentación del vault GPG
 ├── scripts/
 │   └── duckdns/
 │       ├── duckdns.sh          ← Script de actualización DuckDNS
@@ -72,7 +91,8 @@ El acceso externo:
 │   ├── architecture.md         ← Arquitectura general del homelab
 │   ├── public-access.md        ← Acceso público (Tailscale Funnel + DuckDNS)
 │   ├── traefik.md              ← Traefik reverse proxy
-│   └── api.md                  ← Documentación de la API pública
+│   ├── api.md                  ← Documentación de la API pública
+│   └── dr.md                   ← Runbook de disaster recovery (v1.1)
 ├── assets/
 │   ├── diagramas/
 │   ├── fotos/
@@ -243,6 +263,28 @@ Existe un sistema automático de backups programado con systemd timer:
 
 No modificar los archivos de backup sin entender el flujo completo (stop de contenedores SQLite, restart, verificación).
 
+## Reproducibilidad (v1.1)
+
+El homelab es reconstruible desde cero. Objetivo: **reinstalar Debian + clonar repo + reconstruir en <30 min**.
+
+### Componentes
+
+| Componente | Rol |
+|------------|-----|
+| `bootstrap/bootstrap.sh` | Fuente de verdad actual. Idempotente, reconstruye todo |
+| `bootstrap/vars.env` | Configuración del entorno (usuario, red, TS_AUTH_KEY, GPG) |
+| `secrets/vault/*.gpg` | Secretos cifrados con GPG, versionados en git |
+| `ansible/` | Migración progresiva hacia IaC declarativa (roles) |
+| `docs/dr.md` | Runbook de disaster recovery paso a paso |
+
+### Reglas de la estrategia progresiva
+
+- **Un paso vive en un solo lugar**: `bootstrap.sh` o un rol Ansible activo, nunca ambos.
+- `bootstrap.sh` es idempotente: re-ejecutarlo no rompe nada.
+- Los secretos se cifran con `secrets/encrypt.sh` y se restauran con `secrets/decrypt.sh`. Nunca commitear `.env` en texto plano.
+- Los datos persistentes (`~/homelab-data/`) NO están en git; se restauran desde backup.
+- Al agregar un servicio nuevo: crear `compose/<nombre>/`, agregar su deploy al paso 8 del bootstrap, y considerar un rol Ansible si se está migrando.
+
 ## Buenas prácticas para agentes
 
 - Leer este archivo al inicio de cada sesión
@@ -253,6 +295,8 @@ No modificar los archivos de backup sin entender el flujo completo (stop de cont
 - Si se rompe algo, detenerse y consultar antes de continuar
 - Agregar entradas a `08-problemas.md` cuando se encuentren errores
 - Registrar cambios significativos en el README si corresponde
+- Mantener `bootstrap/bootstrap.sh` actualizado con cada cambio de infraestructura
+- Validar cambios de compose con `docker compose config` antes de aplicar
 
 ## Roadmap futuro
 
@@ -263,11 +307,14 @@ No modificar los archivos de backup sin entender el flujo completo (stop de cont
 - [x] Tailscale Funnel — publicación segura de servicios sin abrir puertos
 - [x] API pública (FastAPI) — endpoints públicos y privados con X-API-Key
 - [x] DuckDNS — actualización dinámica de IP via systemd timer
+- [x] Bootstrap reproducible (`bootstrap/bootstrap.sh`)
+- [~] Ansible — esqueleto creado, migración progresiva en curso
 - [ ] Reverse proxy (Traefik o Nginx Proxy Manager) — TLS, dominios
 - [ ] OpenCode — agente de IA local
 - [ ] Base de datos (PostgreSQL, SQLite)
 - [ ] Monitoreo y alertas (Prometheus + Grafana?)
 - [ ] Posible ampliación de RAM a 8 GB
+- [ ] Backup a disco externo USB / destino remoto (rsync)
 
 ## Notas adicionales
 

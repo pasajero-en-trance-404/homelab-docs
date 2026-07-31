@@ -1,0 +1,52 @@
+# Rol: docker
+#
+# ESTADO: PLANIFICADO (no activo)
+# Migración progresiva desde bootstrap.sh, paso [2/9].
+#
+# Pendiente de migrar:
+#   - Repositorio apt de Docker + instalación de docker-ce, compose-plugin
+#   - systemd enable docker, usermod -aG docker <user>
+#
+# Referencia actual (fuente de verdad):
+#   bootstrap/bootstrap.sh → función install_docker()
+---
+- name: Instalar dependencias para el repo de Docker
+  ansible.builtin.apt:
+    name:
+      - ca-certificates
+      - curl
+      - gnupg
+    state: present
+
+- name: Agregar clave GPG de Docker
+  ansible.builtin.apt_key:
+    url: https://download.docker.com/linux/debian/gpg
+    keyring: /etc/apt/keyrings/docker.asc
+
+- name: Agregar repositorio estable de Docker
+  ansible.builtin.apt_repository:
+    repo: "deb [arch={{ ansible_architecture }} signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian {{ ansible_distribution_release }} stable"
+    filename: docker
+    state: present
+
+- name: Instalar Docker Engine + Compose plugin
+  ansible.builtin.apt:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-compose-plugin
+    update_cache: true
+
+- name: Habilitar y arrancar docker
+  ansible.builtin.systemd:
+    name: docker
+    state: started
+    enabled: true
+
+- name: Agregar usuario al grupo docker
+  ansible.builtin.user:
+    name: "{{ homelab_user | default('administrador') }}"
+    groups: docker
+    append: true

@@ -1,0 +1,46 @@
+# Rol: compose
+#
+# ESTADO: PLANIFICADO (no activo)
+# Migración progresiva desde bootstrap.sh, pasos [4/9], [5/9] y [8/9].
+#
+# Pendiente de migrar:
+#   - Crear red externa homelab
+#   - Crear directorios de datos
+#   - Desplegar stacks compose
+#
+# Referencia actual (fuente de verdad):
+#   bootstrap/bootstrap.sh → funciones create_network(), create_dirs() y deploy_compose()
+---
+- name: Crear red externa homelab
+  community.docker.docker_network:
+    name: "{{ homelab_network | default('homelab') }}"
+    driver: bridge
+    ipam_config:
+      - subnet: "{{ homelab_subnet | default('172.22.0.0/16') }}"
+    external: false
+
+- name: Crear directorios de datos
+  ansible.builtin.file:
+    path: "{{ homelab_data | default('/home/administrador/homelab-data') }}/{{ item }}"
+    state: directory
+    owner: "{{ homelab_user | default('administrador') }}"
+    group: "{{ homelab_user | default('administrador') }}"
+  loop:
+    - traefik
+    - portainer
+    - homepage
+    - n8n
+    - uptime-kuma
+    - duckdns
+
+- name: Desplegar stacks compose
+  community.docker.docker_compose_v2:
+    project_src: "{{ homelab_repo | default('/home/administrador/homelab-docs') }}/compose/{{ item }}"
+    state: present
+  loop:
+    - traefik
+    - api
+    - homepage
+    - portainer
+    - n8n
+    - uptime-kuma

@@ -25,7 +25,7 @@ Servidor Debian (192.168.1.50)
 Docker — container api:8000 (red homelab)
     |
     ▼
-FastAPI — GET /api, GET /api/health, GET /api/status
+FastAPI — GET /, /api/health, /api/time, /api/ip, /api/request, /api/server, /api/uuid
 ```
 
 ### Flujo de tráfico
@@ -230,20 +230,33 @@ curl -s "https://www.duckdns.org/update?domains=homelab404-debian&token=<token>&
 
 La API soporta el header `X-API-Key` para endpoints protegidos.
 
-Los endpoints públicos actuales no requieren key:
-- `GET /api/health`
+### Endpoints públicos (sin key)
 
-Los endpoints protegidos requieren `X-API-Key`:
-- `GET /api`
-- `GET /api/status`
+| Endpoint | Descripción |
+|----------|-------------|
+| `GET /` | Landing: nombre, versión y lista de endpoints |
+| `GET /api/health` | Liveness check (estado del servicio) |
+| `GET /api/time` | Hora del servidor en UTC + timestamp Unix |
+| `GET /api/ip` | IP del cliente vista por el servidor |
+| `GET /api/request` | Echo sanitizado de la request (sin headers sensibles) |
+| `GET /api/server` | Hostname y uptime del servidor (datos mínimos) |
+| `GET /api/uuid` | UUID v4 aleatorio |
+| `GET /docs` | Documentación automática (Swagger UI) |
 
-Para agregar protección a un endpoint futuro:
+### Endpoints privados (requieren `X-API-Key`)
 
-```python
-@app.get("/api/protegido")
-def protegido(_=Depends(verify_key)):
-    ...
-```
+| Endpoint | Descripción |
+|----------|-------------|
+| `GET /api` | Resumen del estado de la API |
+| `GET /api/status` | Estado de los contenedores (up/down/unknown) |
+| `GET /api/containers` | Detalle de contenedores (imagen, estado, health) |
+
+### Seguridad de los endpoints públicos
+
+- `/api/server` expone solo hostname y uptime — sin versión de Docker/Python, sin disco, sin conteo de contenedores (evita fingerprinting)
+- `/api/request` filtra headers sensibles: `Authorization`, `X-API-Key`, `Cookie`, `Proxy-Authorization`
+- `/api/ip` expone la IP del cliente, nunca IPs internas del servidor
+- Los endpoints privados solo responden con `X-API-Key` válido (401 en caso contrario)
 
 ### Rotación de API Key
 

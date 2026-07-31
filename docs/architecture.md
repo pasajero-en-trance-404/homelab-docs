@@ -212,4 +212,4 @@ n8n
 - La API se accede desde Internet vía Tailscale Funnel en `https://debian-server.taile532c7.ts.net/api`.
 - Los servicios administrativos se acceden directamente por Tailscale (IP/hostname del tailnet) o por bind a LAN.
 - Alternativamente, todos los servicios (excepto Traefik) son accesibles vía Traefik en `http://127.0.0.1:80` con el header `Host: <servicio>.homelab` (ver `docs/traefik.md`).
-- El endpoint `GET /api/status` consulta el estado de los contenedores vía Docker socket (read-only) y requiere `X-API-Key`.
+- El endpoint `GET /api/status` consulta el estado de los contenedores vía Docker socket (read-only) y requiere `X-API-Key`. Ver `docs/public-access.md` para la lista completa de endpoints.

@@ -2,6 +2,25 @@
 
 Todas las fechas en `YYYY-MM-DD`.
 
+## [2026-07-31] — API pública v1.0 completa (endpoints públicos y privados)
+
+### Agregado
+- Reestructuración en routers: `app/routers/public.py` y `app/routers/private.py`, lógica compartida en `app/util.py`
+- Endpoints públicos nuevos: `GET /`, `GET /api/time`, `GET /api/ip`, `GET /api/request`, `GET /api/server`, `GET /api/uuid`
+- Endpoint privado nuevo: `GET /api/containers` (detalle de contenedores vía Docker socket)
+- Documentación automática FastAPI en `/docs` (Swagger UI)
+
+### Modificado
+- `compose/api/app/main.py` — app simplificada, incluye routers
+- `compose/api/app/util.py` — nuevo: key check, helpers Docker, HOSTNAME, SERVICES (incluye traefik)
+- `docs/public-access.md` — tabla de endpoints públicos y privados, seguridad
+- `README.md`, `AGENTS.md`, `docs/architecture.md` — endpoints actualizados
+
+### Notas de seguridad
+- `/api/server` expone solo hostname y uptime (sin fingerprinting)
+- `/api/request` filtra headers sensibles (Authorization, X-API-Key, Cookie)
+- `/api/ip` expone solo la IP del cliente
+
 ## [2026-07-31] — Traefik reverse proxy con host-based routing
 
 ### Agregado

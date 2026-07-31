@@ -31,3 +31,4 @@ Thumbs.db
 
 # Temporales
 *.tmp
+__pycache__/

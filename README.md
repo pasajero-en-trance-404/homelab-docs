@@ -83,7 +83,7 @@ Todo lo que se instala, configura o modifica queda documentado.
 ### Servicios públicos
 
 - [x] Tailscale Funnel — Exposición pública de la API sin abrir puertos
-- [x] API pública (FastAPI) — `GET /api`, `GET /api/health`, `GET /api/status`
+- [x] API pública (FastAPI) — endpoints públicos (`/`, `/api/health`, `/api/time`, `/api/ip`, `/api/request`, `/api/server`, `/api/uuid`) + privados (`/api`, `/api/status`, `/api/containers`)
 - [x] DuckDNS — Dominio dinámico con actualización automática via systemd timer
 
 ### Pendiente

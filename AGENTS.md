@@ -253,7 +253,7 @@ No modificar los archivos de backup sin entender el flujo completo (stop de cont
 - [x] Firewall (DOCKER-USER) — bloqueo de LAN no autorizada
 - [x] Sistema de backups automáticos
 - [x] Tailscale Funnel — publicación segura de servicios sin abrir puertos
-- [x] API pública (FastAPI) — `GET /api`, `GET /api/health`, `GET /api/status`
+- [x] API pública (FastAPI) — endpoints públicos y privados con X-API-Key
 - [x] DuckDNS — actualización dinámica de IP via systemd timer
 - [ ] Reverse proxy (Traefik o Nginx Proxy Manager) — TLS, dominios
 - [ ] OpenCode — agente de IA local

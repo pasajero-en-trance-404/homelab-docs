@@ -1,0 +1,11 @@
+[Unit]
+Description=DuckDNS update timer (every 5 minutes)
+Requires=duckdns.service
+
+[Timer]
+OnCalendar=*:0/5
+RandomizedDelaySec=60
+Persistent=true
+
+[Install]
+WantedBy=timers.target

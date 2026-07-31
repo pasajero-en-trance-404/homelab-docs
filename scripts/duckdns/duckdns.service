@@ -1,0 +1,14 @@
+[Unit]
+Description=DuckDNS dynamic DNS update
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=administrador
+ExecStart=/home/administrador/homelab-docs/scripts/duckdns/duckdns.sh
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

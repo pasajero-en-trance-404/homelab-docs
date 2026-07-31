@@ -55,7 +55,7 @@ Todo lo que se instala, configura o modifica queda documentado.
 | 08-problemas.md | Errores encontrados y soluciones |
 | 09-comandos-utiles.md | Comandos de referencia |
 | docs/architecture.md | Arquitectura general del homelab |
-| docs/public-access.md | Acceso público (Tailscale Funnel) |
+| docs/public-access.md | Acceso público (Tailscale Funnel + DuckDNS) |
 | CHANGELOG.md | Historial de cambios del proyecto |
 | AGENTS.md | Contexto para agentes de IA |
 
@@ -81,7 +81,8 @@ Todo lo que se instala, configura o modifica queda documentado.
 ### Servicios públicos
 
 - [x] Tailscale Funnel — Exposición pública de la API sin abrir puertos
-- [x] API pública (FastAPI) — `GET /api`, `GET /api/health`
+- [x] API pública (FastAPI) — `GET /api`, `GET /api/health`, `GET /api/status`
+- [x] DuckDNS — Dominio dinámico con actualización automática via systemd timer
 
 ### Pendiente
 

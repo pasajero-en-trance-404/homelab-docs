@@ -32,6 +32,20 @@ Todas las fechas en `YYYY-MM-DD`.
 - `docs/architecture.md` — nota sobre Docker socket en la API
 - `CHANGELOG.md` — esta entrada
 
+## [2026-07-30] — DuckDNS con actualización automática via systemd
+
+### Agregado
+- Script DuckDNS: `scripts/duckdns/duckdns.sh` con lectura segura de token desde `~/homelab-data/`
+- Systemd oneshot service: `scripts/duckdns/duckdns.service`
+- Systemd timer: `scripts/duckdns/duckdns.timer` (cada 5 minutos, con retardo aleatorio)
+- Template de configuración: `scripts/duckdns/.env.example`
+- Dominio configurado: `homelab404-debian.duckdns.org` → IP pública actualizada
+
+### Modificado
+- `docs/public-access.md` — sección DuckDNS completa: setup, verificación, troubleshooting
+- `AGENTS.md` — estructura de carpetas actualizada con `scripts/`, roadmap con DuckDNS
+- `README.md` — servicios públicos actualizados con DuckDNS
+
 ## [2026-07-29] — Firewall persistente y documentación
 
 ### Agregado

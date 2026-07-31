@@ -128,16 +128,101 @@ Los servicios administrativos se acceden por Tailscale directo sin Serve/Funnel.
 
 ## DuckDNS
 
-El dominio `homelab404-debian.duckdns.org` está registrado para uso futuro.
+El dominio `homelab404-debian.duckdns.org` se actualiza automáticamente con la IP pública del servidor mediante systemd timer.
 
-Actualmente no es posible vincular DuckDNS directamente a Tailscale Funnel porque:
+### Arquitectura
+
+```
+DuckDNS API → homelab404-debian.duckdns.org → 181.84.216.208 (IP pública)
+                       │
+         (futuro: reverse proxy en puerto 443)
+                       │
+              Servidor Debian
+```
+
+Actualmente DuckDNS no está vinculado directamente a Tailscale Funnel porque:
 - DuckDNS solo admite registros A/AAAA (IPs)
-- Funnel no expone una IP pública fija, usa la infraestructura de Tailscale
+- Funnel usa la infraestructura de Tailscale (dominio `.ts.net`)
+- Para servir HTTPS en el dominio DuckDNS se necesita un reverse proxy (Traefik/Nginx) — fase futura
 
-**Uso futuro posible:**
-- Reverse proxy (Traefik / Nginx Proxy Manager)
-- Cloudflare Tunnel
-- Redirección desde el dominio DuckDNS hacia la URL de Funnel
+### Archivos
+
+| Archivo | Propósito |
+|---------|-----------|
+| `scripts/duckdns/duckdns.sh` | Script de actualización |
+| `scripts/duckdns/duckdns.service` | Systemd oneshot service |
+| `scripts/duckdns/duckdns.timer` | Systemd timer (cada 5 min) |
+| `scripts/duckdns/.env.example` | Template de configuración |
+
+### Configuración
+
+El token se almacena fuera del repositorio en:
+
+```
+~/homelab-data/duckdns/duckdns.conf
+```
+
+Formato del archivo:
+
+```bash
+DUCKDNS_DOMAIN=homelab404-debian
+DUCKDNS_TOKEN=tu-token-aqui
+```
+
+### Instalación
+
+```bash
+# 1. Crear archivo de configuración
+mkdir -p ~/homelab-data/duckdns
+cat > ~/homelab-data/duckdns/duckdns.conf << 'EOF'
+DUCKDNS_DOMAIN=homelab404-debian
+DUCKDNS_TOKEN=<token>
+EOF
+chmod 600 ~/homelab-data/duckdns/duckdns.conf
+
+# 2. Copiar units e iniciar timer
+sudo cp scripts/duckdns/duckdns.service /etc/systemd/system/
+sudo cp scripts/duckdns/duckdns.timer /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now duckdns.timer
+```
+
+### Verificación
+
+```bash
+# Estado del timer
+systemctl status duckdns.timer
+systemctl list-timers --all | grep duckdns
+
+# Logs del servicio
+sudo journalctl -u duckdns.service
+sudo journalctl -u duckdns.timer
+
+# Resolución DNS
+dig homelab404-debian.duckdns.org +short
+nslookup homelab404-debian.duckdns.org
+
+# Actualización manual (prueba)
+curl -s "https://www.duckdns.org/update?domains=homelab404-debian&token=<token>&ip="
+```
+
+### Troubleshooting
+
+| Síntoma | Causa probable | Solución |
+|---------|---------------|----------|
+| `response=KO` | Token inválido | Verificar token en `~/homelab-data/duckdns/duckdns.conf` |
+| Servicio falla con `status=203/EXEC` | Ruta del script incorrecta | Verificar `ExecStart` en el service unit |
+| Timer no arranca | `duckdns.service` no encontrado | Verificar que el service unit está en `/etc/systemd/system/` |
+| No se actualiza la IP | Sin conectividad a DuckDNS | Verificar con `curl -s https://www.duckdns.org` |
+| `journalctl` no muestra logs | Usuario sin permisos | Usar `sudo journalctl` |
+| `dig` no resuelve | DNS caché / DuckDNS propagación | Esperar 5 min y reintentar |
+
+### Limitaciones
+
+- El dominio DuckDNS solo resuelve a la IP pública, no hay TLS sin reverse proxy
+- La IP se actualiza cada 5 minutos via systemd timer
+- Si la IP pública cambia, puede haber hasta 5 minutos de desactualización
+- DuckDNS no soporta CNAME ni reenvío a URLs de Tailscale
 
 ## Seguridad
 

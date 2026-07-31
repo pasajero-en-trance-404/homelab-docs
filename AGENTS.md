@@ -59,6 +59,12 @@ El acceso externo:
 │   ├── backup.service          ← Systemd service unit
 │   ├── backup.timer            ← Systemd timer (diario 03:00)
 │   └── README.md               ← Documentación del sistema de backups
+├── scripts/
+│   └── duckdns/
+│       ├── duckdns.sh          ← Script de actualización DuckDNS
+│       ├── duckdns.service     ← Systemd service unit
+│       ├── duckdns.timer       ← Systemd timer (cada 5 min)
+│       └── .env.example        ← Template de configuración
 ├── docs/
 │   └── architecture.md         ← Arquitectura general del homelab
 ├── assets/
@@ -234,7 +240,8 @@ No modificar los archivos de backup sin entender el flujo completo (stop de cont
 - [x] Firewall (DOCKER-USER) — bloqueo de LAN no autorizada
 - [x] Sistema de backups automáticos
 - [x] Tailscale Funnel — publicación segura de servicios sin abrir puertos
-- [x] API pública (FastAPI) — `GET /api`, `GET /api/health`
+- [x] API pública (FastAPI) — `GET /api`, `GET /api/health`, `GET /api/status`
+- [x] DuckDNS — actualización dinámica de IP via systemd timer
 - [ ] Reverse proxy (Traefik o Nginx Proxy Manager) — TLS, dominios
 - [ ] OpenCode — agente de IA local
 - [ ] Base de datos (PostgreSQL, SQLite)

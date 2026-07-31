@@ -66,7 +66,8 @@ El acceso externo:
 │       ├── duckdns.timer       ← Systemd timer (cada 5 min)
 │       └── .env.example        ← Template de configuración
 ├── docs/
-│   └── architecture.md         ← Arquitectura general del homelab
+│   ├── architecture.md         ← Arquitectura general del homelab
+│   └── public-access.md        ← Acceso público (Tailscale Funnel + DuckDNS)
 ├── assets/
 │   ├── diagramas/
 │   ├── fotos/

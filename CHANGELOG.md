@@ -2,6 +2,14 @@
 
 Todas las fechas en `YYYY-MM-DD`.
 
+## [2026-07-30] — Auditoría de documentación v1.0
+
+### Corregido
+- `AGENTS.md` — agregado `docs/public-access.md` al árbol de directorios (faltaba)
+- `backup/README.md` — documentación de `pigz` corregida a `gzip`; agregada tabla de exclusiones de Portainer
+- `01-hardware.md` — nota sobre VRAM reservada por la APU; partición Debian unificada a `65 GB`
+- `README.md` — partición sistema corregida de `60 GB` a `65 GB`
+
 ## [2026-07-30] — API pública con Tailscale Funnel
 
 ### Agregado

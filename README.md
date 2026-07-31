@@ -34,7 +34,7 @@ Todo lo que se instala, configura o modifica queda documentado.
 |------------|----------------|
 | CPU | AMD A4-4000 APU (2 cores, 3.0 GHz) |
 | RAM | 4 GB DDR3 (3 GB disponibles, objetivo: 8 GB) |
-| Disco | SSD 120 GB (60 GB partición sistema, 20% usado) |
+| Disco | SSD 120 GB (65 GB partición sistema, 20% usado) |
 | Placa | ASUS A55BM-K (2014) |
 | Red | Ethernet 1000 Mbps |
 

@@ -4,13 +4,13 @@
 
 Backup automático diario de los datos del homelab:
 - `~/homelab-data/` — datos persistentes de contenedores (Portainer, n8n, Uptime Kuma, Homepage)
-- `~/homelab-docs/` — documentación y configuraciones del repositorio (excluye `.git` y `.env`)
+- `~/homelab-docs/` — documentación y configuraciones del repositorio
 
 ## Estrategia
 
 | Aspecto          | Detalle                                       |
 |------------------|-----------------------------------------------|
-| Herramientas     | `tar` + `pigz` (compresión gzip paralela)     |
+| Herramientas     | `tar` + `gzip` (compresión estándar)           |
 | Formato          | `homelab-YYYY-MM-DD-HHMMSS.tar.gz`            |
 | Destino          | `/home/administrador/backups/`                |
 | Programación     | Systemd timer — diario a las 03:00 ±5 min     |
@@ -40,6 +40,20 @@ Backup automático diario de los datos del homelab:
 | `backup.sh`       | Script principal                 |
 | `backup.service`  | Systemd service unit             |
 | `backup.timer`    | Systemd timer unit               |
+
+## Exclusiones
+
+El script excluye los siguientes directorios del backup:
+
+| Exclusión | Motivo |
+|-----------|--------|
+| `homelab-docs/.git` | Repositorio remoto ya existe en GitHub |
+| `homelab-docs/compose/n8n/.env` | Contiene credenciales |
+| `homelab-data/portainer/certs` | Certificados efímeros regenerables |
+| `homelab-data/portainer/bin` | Binarios descargables |
+| `homelab-data/portainer/compose` | Stacks de Portainer (en git) |
+| `homelab-data/portainer/tls` | Certificados TLS regenerables |
+| `homelab-data/portainer/chisel` | Tunnel efímero |
 
 ## Instalación
 

@@ -55,6 +55,7 @@ Todo lo que se instala, configura o modifica queda documentado.
 | 08-problemas.md | Errores encontrados y soluciones |
 | 09-comandos-utiles.md | Comandos de referencia |
 | docs/architecture.md | Arquitectura general del homelab |
+| docs/acceso-remoto.md | Acceso remoto desde Ubuntu (SSH, Tailscale, OpenCode) |
 | docs/public-access.md | Acceso público (Tailscale Funnel + DuckDNS) |
 | docs/traefik.md | Traefik reverse proxy |
 | docs/dr.md | Runbook de disaster recovery (v1.1) |

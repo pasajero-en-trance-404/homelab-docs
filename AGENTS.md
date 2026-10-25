@@ -89,6 +89,7 @@ El acceso externo:
 │       └── .env.example        ← Template de configuración
 ├── docs/
 │   ├── architecture.md         ← Arquitectura general del homelab
+│   ├── acceso-remoto.md        ← Acceso remoto desde Ubuntu (SSH + Tailscale + OpenCode)
 │   ├── public-access.md        ← Acceso público (Tailscale Funnel + DuckDNS)
 │   ├── traefik.md              ← Traefik reverse proxy
 │   ├── api.md                  ← Documentación de la API pública

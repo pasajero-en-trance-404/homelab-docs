@@ -33,7 +33,7 @@ Tailscale está instalado y activo. Puerta de entrada remota al servidor.
 
 | Aspecto | Valor |
 |---------|-------|
-| Versión | 1.98.9 |
+| Versión | 1.102.2 |
 | IP tailnet | `100.119.176.84` / `fd7a:115c:a1e0::ef01:b0cc` |
 | MagicDNS | `debian-server.taile532c7.ts.net` |
 | Interfaz | `tailscale0` |
@@ -55,6 +55,8 @@ http://100.119.176.84:9000   # Portainer
 http://100.119.176.84:5678   # n8n
 http://100.119.176.84:3001   # Uptime Kuma
 ```
+
+Procedimiento completo desde la computadora Ubuntu (SSH, OpenCode y verificaciones): [`docs/acceso-remoto.md`](docs/acceso-remoto.md).
 
 ## Firewall (DOCKER-USER)
 
@@ -143,6 +145,8 @@ sudo systemctl status docker-user-restore.service
 | `X11Forwarding` | no |
 
 Solo acceso por clave SSH. No hay acceso por contraseña. Deshabilitado root login.
+
+Conexión desde Ubuntu y uso de OpenCode: ver [`docs/acceso-remoto.md`](docs/acceso-remoto.md).
 
 ## Comandos utilizados
 

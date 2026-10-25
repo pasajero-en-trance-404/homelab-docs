@@ -2,6 +2,15 @@
 
 Todas las fechas en `YYYY-MM-DD`.
 
+## [2026-10-25] — Documentación de acceso remoto
+
+### Agregado
+- `docs/acceso-remoto.md` — guía operativa de acceso desde Ubuntu: SSH por LAN y Tailscale, OpenCode en Debian, verificaciones, seguridad y troubleshooting
+
+### Modificado
+- `05-red.md` — versión de Tailscale actualizada a `1.102.2` y enlaces a la nueva guía
+- `README.md` y `AGENTS.md` — índice de documentación actualizado
+
 ## [2026-07-31] — Homelab Rebuild v1.1 CLOSED
 
 ### Cierre oficial

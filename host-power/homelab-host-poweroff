@@ -1,0 +1,23 @@
+#!/bin/sh
+set -eu
+
+# This helper accepts only the fixed action token. It does not take arguments,
+# evaluate input, or invoke a shell with request data.
+IFS= read -r request || exit 64
+[ "$request" = "host.shutdown" ] || exit 64
+
+exec 9>/run/homelab-power/shutdown.lock
+/usr/bin/flock -n 9 || { printf 'rejected\n'; exit 1; }
+if [ -e /run/homelab-power/shutdown-pending ]; then
+    printf 'rejected\n'
+    exit 1
+fi
+
+/usr/bin/touch /run/homelab-power/shutdown-pending
+/usr/bin/chmod 0600 /run/homelab-power/shutdown-pending
+if ! /usr/bin/systemctl --no-block poweroff >/dev/null 2>&1; then
+    /usr/bin/rm -f /run/homelab-power/shutdown-pending
+    printf 'rejected\n'
+    exit 1
+fi
+printf 'accepted\n'

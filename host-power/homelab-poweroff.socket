@@ -1,0 +1,11 @@
+[Unit]
+Description=Restricted Homelab host poweroff socket
+
+[Socket]
+ListenStream=/run/homelab-power/poweroff.sock
+Accept=yes
+SocketUser=root
+SocketGroup=homelab-power
+SocketMode=0660
+[Install]
+WantedBy=sockets.target

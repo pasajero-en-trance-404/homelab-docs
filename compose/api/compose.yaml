@@ -1,23 +1,67 @@
 services:
   api:
     build: .
+    image: homelab-ai-api:stage7-power-audit-20261107
     container_name: api
     hostname: debian-server
     restart: unless-stopped
-    ports:
-      - "127.0.0.1:8000:8000"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
+    group_add:
+      - "${POWER_SOCKET_GID:-30001}"
+    # Explicit non-root runtime identity (must match the Dockerfile user).
+    user: "10001:10001"
     env_file:
       - .env
+    environment:
+      DOCKER_PROXY_URL: http://socket-proxy:2375
+      POWER_SOCKET_PATH: /run/homelab-power/poweroff.sock
+    volumes:
+      - /run/homelab-power:/run/homelab-power:ro
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=2).read()"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     networks:
       - homelab
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.api.rule=Host(`api.homelab`)"
-      - "traefik.http.routers.api.entrypoints=web"
-      - "traefik.http.services.api.loadbalancer.server.port=8000"
+      - docker_api
+
+  # Read-only Docker API proxy. The API container never mounts the Docker
+  # socket directly; it can only issue GET /containers/json through this
+  # internal network. No published ports.
+  socket-proxy:
+    image: ghcr.io/wollomatic/socket-proxy:1.13.2
+    container_name: socket-proxy
+    restart: unless-stopped
+    # Match only the Docker socket's owning group; the proxy remains non-root.
+    group_add:
+      - "${DOCKER_GID:?Set DOCKER_GID to the Docker socket group ID}"
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 64m
+    command:
+      - '-listenip=0.0.0.0'
+      - '-allowfrom=api'
+      # Exact-match allowlist; ^ and $ are added by socket-proxy.
+      - '-allowGET=/containers/json'
+      - '-loglevel=info'
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - docker_api
 
 networks:
   homelab:
     external: true
+  docker_api:
+    name: homelab-docker-api
+    driver: bridge
+    internal: true
+    attachable: false

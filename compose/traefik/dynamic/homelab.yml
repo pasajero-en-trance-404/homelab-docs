@@ -1,0 +1,64 @@
+http:
+  routers:
+    homelab-api-lan:
+      rule: "Host(`debian-server.local`)"
+      entryPoints:
+        - websecure
+      service: homelab-api
+      tls:
+        options: lan
+
+    homepage-local:
+      rule: "Host(`homepage.homelab`)"
+      entryPoints:
+        - web
+      service: homepage-local
+
+    portainer-local:
+      rule: "Host(`portainer.homelab`)"
+      entryPoints:
+        - web
+      service: portainer-local
+
+    n8n-local:
+      rule: "Host(`n8n.homelab`)"
+      entryPoints:
+        - web
+      service: n8n-local
+
+    uptime-kuma-local:
+      rule: "Host(`uptime.homelab`)"
+      entryPoints:
+        - web
+      service: uptime-kuma-local
+
+  services:
+    homelab-api:
+      loadBalancer:
+        servers:
+          - url: "http://api:8000"
+    homepage-local:
+      loadBalancer:
+        servers:
+          - url: "http://homepage:3000"
+    portainer-local:
+      loadBalancer:
+        servers:
+          - url: "http://portainer:9000"
+    n8n-local:
+      loadBalancer:
+        servers:
+          - url: "http://n8n:5678"
+    uptime-kuma-local:
+      loadBalancer:
+        servers:
+          - url: "http://uptime-kuma:3001"
+
+tls:
+  certificates:
+    - certFile: /certs/server.crt
+      keyFile: /certs/server.key
+  options:
+    lan:
+      minVersion: VersionTLS12
+      sniStrict: true

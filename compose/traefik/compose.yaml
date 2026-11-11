@@ -1,22 +1,29 @@
 services:
   traefik:
-    image: traefik:v3.7
+    image: traefik:v3.7.9
     container_name: traefik
     restart: unless-stopped
     ports:
-      - "127.0.0.1:80:80"
-      - "127.0.0.1:8080:8080"
+      - target: 80
+        published: "80"
+        host_ip: 127.0.0.1
+        protocol: tcp
+      - target: 443
+        published: "443"
+        host_ip: ${LAN_BIND_IP:?Set LAN_BIND_IP in compose/traefik/.env}
+        protocol: tcp
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./traefik.yml:/traefik.yml:ro
       - /home/administrador/homelab-data/traefik:/data
+      - ./dynamic:/etc/traefik/dynamic:ro
+      - type: bind
+        source: ${TLS_CERT_DIR:?Set TLS_CERT_DIR in compose/traefik/.env}
+        target: /certs
+        read_only: true
+        bind:
+          create_host_path: false
     networks:
       - homelab
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.dashboard.rule=Host(`traefik.homelab`)"
-      - "traefik.http.routers.dashboard.entrypoints=web"
-      - "traefik.http.routers.dashboard.service=api@internal"
 
 networks:
   homelab:

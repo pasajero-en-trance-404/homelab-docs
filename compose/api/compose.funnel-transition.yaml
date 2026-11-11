@@ -1,0 +1,7 @@
+# Temporary compatibility override for the approved Funnel cutover only.
+# It keeps the existing loopback target alive while LAN HTTPS is verified.
+# Remove this file from the final deployment command to stop publishing :8000.
+services:
+  api:
+    ports:
+      - "127.0.0.1:8000:8000"

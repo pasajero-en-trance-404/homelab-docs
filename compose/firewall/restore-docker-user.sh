@@ -22,7 +22,8 @@ INTERVAL=2
 elapsed=0
 
 while [ "$elapsed" -lt "$TIMEOUT" ]; do
-    if iptables -L DOCKER-USER -n >/dev/null 2>&1; then
+    if iptables -L DOCKER-USER -n >/dev/null 2>&1 && \
+       ip6tables -L DOCKER-USER -n >/dev/null 2>&1; then
         break
     fi
     sleep "$INTERVAL"
@@ -30,14 +31,28 @@ while [ "$elapsed" -lt "$TIMEOUT" ]; do
 done
 
 # Final check
-if ! iptables -L DOCKER-USER -n >/dev/null 2>&1; then
-    echo "ERROR [restore-docker-user]: DOCKER-USER chain not found after ${TIMEOUT}s." >&2
+if ! iptables -L DOCKER-USER -n >/dev/null 2>&1 || \
+   ! ip6tables -L DOCKER-USER -n >/dev/null 2>&1; then
+    echo "ERROR [restore-docker-user]: IPv4/IPv6 DOCKER-USER chain not found after ${TIMEOUT}s." >&2
     echo "Is Docker running? Check: systemctl status docker" >&2
     logger -t restore-docker-user "ERROR: DOCKER-USER chain not found after ${TIMEOUT}s"
     exit 1
 fi
 
 set -e
+
+# IPv6: Docker has wildcard userland-proxy listeners while the host has no
+# global IPv6 address on enp3s0. Do not expose those services over IPv6.
+# Apply these guards before rebuilding the IPv4 allowlist.
+IPV6_BLOCK_PORTS=3000,3001,5678,9000,443,8000,2375
+ip6tables -C INPUT -i enp3s0 -p tcp -m multiport --dports "$IPV6_BLOCK_PORTS" \
+    -m conntrack --ctstate NEW -j DROP || \
+    ip6tables -I INPUT 1 -i enp3s0 -p tcp -m multiport --dports "$IPV6_BLOCK_PORTS" \
+        -m conntrack --ctstate NEW -j DROP
+ip6tables -C DOCKER-USER -i enp3s0 -p tcp -m multiport --dports "$IPV6_BLOCK_PORTS" \
+    -m conntrack --ctstate NEW -j DROP || \
+    ip6tables -I DOCKER-USER 1 -i enp3s0 -p tcp -m multiport --dports "$IPV6_BLOCK_PORTS" \
+        -m conntrack --ctstate NEW -j DROP
 
 # ── Flush existing rules (chain confirmed exists) ──────
 iptables -F DOCKER-USER
@@ -65,11 +80,12 @@ iptables -A DOCKER-USER -i br+ -p icmp --icmp-type echo-reply -j ACCEPT
 iptables -A DOCKER-USER -i docker0 -p icmp --icmp-type echo-request -j ACCEPT
 iptables -A DOCKER-USER -i docker0 -p icmp --icmp-type echo-reply -j ACCEPT
 
-# 6. LAN access: only Homepage dashboard
-iptables -A DOCKER-USER -s 192.168.1.0/24 -p tcp --dport 3000 -j ACCEPT
+# 6. LAN access: Homepage dashboard and Homelab AI HTTPS
+iptables -A DOCKER-USER -i enp3s0 -s 192.168.1.0/24 -p tcp --dport 3000 -j ACCEPT
+iptables -A DOCKER-USER -i enp3s0 -s 192.168.1.0/24 -p tcp --dport 443 -j ACCEPT
 
 # 7. Block everything else
 iptables -A DOCKER-USER -j DROP
 
 logger -t restore-docker-user "DOCKER-USER rules applied successfully"
-echo "restore-docker-user: DOCKER-USER rules applied successfully"
+echo "restore-docker-user: IPv4 and IPv6 rules applied successfully"

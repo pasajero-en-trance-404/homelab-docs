@@ -2,6 +2,23 @@
 
 Todas las fechas en `YYYY-MM-DD`.
 
+## [2026-11-10] — API v1.1.0: recursos del server
+
+### Agregado
+- `GET /api/resources` — CPU (núcleos, load average, uso aproximado), memoria/swap, disco visible por el contenedor, uptime y temperatura opcional; lectura de `/proc` con degradación a `null`
+- `docs/desarrollo-endpoints.md` — guía para agregar endpoints (routers, auth, contrato, métricas, validación y despliegue)
+- Colección Postman: `GET /api/resources` y `POST /api/power/shutdown/prepare` / `POST /api/power/shutdown`, con variables `{{api_key}}`, `{{power_api_key}}` y `{{approval_token}}`
+
+### Modificado
+- `compose/api/app/routers/private.py` — endpoint privado `/api/resources` y helpers de `/proc`/`/sys`
+- `compose/api/app/main.py` — versión `1.1.0`
+- `compose/api/compose.yaml` — imagen `homelab-ai-api:v1.1.0-resources-20261110`
+- `docs/postman/homelab-api.postman_collection.json` — alineada al contrato real (solo `/api/health` público, `/docs` deshabilitado)
+- `docs/api.md`, `docs/public-access.md`, `README.md`, `AGENTS.md` — contrato de auth, `/openapi.json` protegido y nuevos endpoints
+
+### Corregido
+- `/api/resources` devolvía 500 por colisión entre la función `time()` y el módulo `time`; se reemplazó por `from time import sleep`
+
 ## [2026-10-25] — Documentación de acceso remoto
 
 ### Agregado

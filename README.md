@@ -58,6 +58,7 @@ Todo lo que se instala, configura o modifica queda documentado.
 | docs/acceso-remoto.md | Acceso remoto desde Ubuntu (SSH, Tailscale, OpenCode) |
 | docs/public-access.md | Acceso público (Tailscale Funnel + DuckDNS) |
 | docs/api.md | Documentación de la API (pública y privada) |
+| docs/desarrollo-endpoints.md | Guía para agregar endpoints a la API |
 | docs/traefik.md | Traefik reverse proxy |
 | docs/dr.md | Runbook de disaster recovery (v1.1) |
 | docs/ANALISIS-SERVER.md | Análisis del server y guía para agregar endpoints |

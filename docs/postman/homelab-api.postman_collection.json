@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Homelab API",
-    "description": "Colección de la API pública del homelab.\n\nVariables:\n- {{base_url}}: base de la API (por defecto http://127.0.0.1:8000). Para público usar https://debian-server.taile532c7.ts.net\n- {{api_key}}: X-API-Key para endpoints privados\n\nReferencia: docs/api.md",
+    "description": "Colección de la API del homelab.\n\nSolo GET /api/health es público. El resto requiere X-API-Key. /api/power/* requiere además X-Power-Approval-Key.\n\nVariables:\n- {{base_url}}: base de la API (por defecto http://127.0.0.1:8000; Funnel: https://debian-server.taile532c7.ts.net)\n- {{api_key}}: valor de API_KEY\n- {{power_api_key}}: valor de POWER_API_KEY\n- {{approval_token}}: token emitido por /api/power/shutdown/prepare\n\nNunca guardes keys reales en la colección.\n\nReferencia: docs/api.md y docs/desarrollo-endpoints.md",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -14,48 +14,22 @@
       "key": "api_key",
       "value": "tu-api-key-aqui",
       "type": "string"
+    },
+    {
+      "key": "power_api_key",
+      "value": "tu-power-api-key-aqui",
+      "type": "string"
+    },
+    {
+      "key": "approval_token",
+      "value": "token-de-aprobacion",
+      "type": "string"
     }
   ],
   "item": [
     {
-      "name": "Endpoints públicos",
+      "name": "Público (sin key)",
       "item": [
-        {
-          "name": "GET /",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/",
-              "host": ["{{base_url}}"],
-              "path": [""]
-            },
-            "description": "Landing: nombre, versión y lista de endpoints"
-          },
-          "response": [
-            {
-              "name": "200 OK",
-              "originalRequest": {
-                "method": "GET",
-                "header": [],
-                "url": {
-                  "raw": "{{base_url}}/",
-                  "host": ["{{base_url}}"],
-                  "path": [""]
-                }
-              },
-              "status": "OK",
-              "code": 200,
-              "header": [
-                {
-                  "key": "Content-Type",
-                  "value": "application/json"
-                }
-              ],
-              "body": "{\n  \"name\": \"Homelab API\",\n  \"version\": \"1.0.0\",\n  \"description\": \"API pública del homelab\",\n  \"endpoints\": {\n    \"root\": \"/\",\n    \"health\": \"/api/health\",\n    \"time\": \"/api/time\",\n    \"ip\": \"/api/ip\",\n    \"request\": \"/api/request\",\n    \"server\": \"/api/server\",\n    \"uuid\": \"/api/uuid\",\n    \"docs\": \"/docs\"\n  },\n  \"timestamp\": \"2026-07-31T02:20:22.927652+00:00\"\n}"
-            }
-          ]
-        },
         {
           "name": "GET /api/health",
           "request": {
@@ -66,7 +40,7 @@
               "host": ["{{base_url}}"],
               "path": ["api", "health"]
             },
-            "description": "Liveness check (estado del servicio)"
+            "description": "Único endpoint público. No requiere key."
           },
           "response": [
             {
@@ -88,226 +62,34 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"status\": \"ok\",\n  \"server\": \"debian-server\",\n  \"timestamp\": \"2026-07-31T02:20:23.029154+00:00\"\n}"
+              "body": "{\n  \"status\": \"ok\"\n}"
             }
           ]
-        },
-        {
-          "name": "GET /api/time",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/api/time",
-              "host": ["{{base_url}}"],
-              "path": ["api", "time"]
-            },
-            "description": "Hora del servidor en UTC + timestamp Unix"
-          },
-          "response": [
-            {
-              "name": "200 OK",
-              "originalRequest": {
-                "method": "GET",
-                "header": [],
-                "url": {
-                  "raw": "{{base_url}}/api/time",
-                  "host": ["{{base_url}}"],
-                  "path": ["api", "time"]
-                }
-              },
-              "status": "OK",
-              "code": 200,
-              "header": [
-                {
-                  "key": "Content-Type",
-                  "value": "application/json"
-                }
-              ],
-              "body": "{\n  \"time_utc\": \"2026-07-31T02:20:23.080389+00:00\",\n  \"unix_seconds\": 1785464423,\n  \"timezone\": \"UTC\",\n  \"server\": \"debian-server\"\n}"
-            }
-          ]
-        },
-        {
-          "name": "GET /api/ip",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/api/ip",
-              "host": ["{{base_url}}"],
-              "path": ["api", "ip"]
-            },
-            "description": "IP del cliente vista por el servidor"
-          },
-          "response": [
-            {
-              "name": "200 OK",
-              "originalRequest": {
-                "method": "GET",
-                "header": [],
-                "url": {
-                  "raw": "{{base_url}}/api/ip",
-                  "host": ["{{base_url}}"],
-                  "path": ["api", "ip"]
-                }
-              },
-              "status": "OK",
-              "code": 200,
-              "header": [
-                {
-                  "key": "Content-Type",
-                  "value": "application/json"
-                }
-              ],
-              "body": "{\n  \"ip\": \"172.22.0.1\",\n  \"source\": \"direct\"\n}"
-            }
-          ]
-        },
-        {
-          "name": "GET /api/request",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "User-Agent",
-                "value": "PostmanRuntime",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/request?foo=bar",
-              "host": ["{{base_url}}"],
-              "path": ["api", "request"],
-              "query": [
-                {
-                  "key": "foo",
-                  "value": "bar"
-                }
-              ]
-            },
-            "description": "Echo sanitizado de la request (sin headers sensibles: Authorization, X-API-Key, Cookie)"
-          },
-          "response": [
-            {
-              "name": "200 OK",
-              "originalRequest": {
-                "method": "GET",
-                "header": [],
-                "url": {
-                  "raw": "{{base_url}}/api/request?foo=bar",
-                  "host": ["{{base_url}}"],
-                  "path": ["api", "request"],
-                  "query": [
-                    {
-                      "key": "foo",
-                      "value": "bar"
-                    }
-                  ]
-                }
-              },
-              "status": "OK",
-              "code": 200,
-              "header": [
-                {
-                  "key": "Content-Type",
-                  "value": "application/json"
-                }
-              ],
-              "body": "{\n  \"method\": \"GET\",\n  \"path\": \"/api/request\",\n  \"query\": {\n    \"foo\": \"bar\"\n  },\n  \"user_agent\": \"curl/8.0\",\n  \"referer\": null,\n  \"headers\": {\n    \"host\": \"127.0.0.1:8000\",\n    \"accept\": \"*/*\",\n    \"user-agent\": \"curl/8.0\"\n  }\n}"
-            }
-          ]
-        },
-        {
-          "name": "GET /api/server",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/api/server",
-              "host": ["{{base_url}}"],
-              "path": ["api", "server"]
-            },
-            "description": "Hostname y uptime del servidor (datos mínimos)"
-          },
-          "response": [
-            {
-              "name": "200 OK",
-              "originalRequest": {
-                "method": "GET",
-                "header": [],
-                "url": {
-                  "raw": "{{base_url}}/api/server",
-                  "host": ["{{base_url}}"],
-                  "path": ["api", "server"]
-                }
-              },
-              "status": "OK",
-              "code": 200,
-              "header": [
-                {
-                  "key": "Content-Type",
-                  "value": "application/json"
-                }
-              ],
-              "body": "{\n  \"hostname\": \"debian-server\",\n  \"uptime_seconds\": 22180,\n  \"timestamp\": \"2026-07-31T02:20:23.233038+00:00\"\n}"
-            }
-          ]
-        },
-        {
-          "name": "GET /api/uuid",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/api/uuid",
-              "host": ["{{base_url}}"],
-              "path": ["api", "uuid"]
-            },
-            "description": "UUID v4 aleatorio"
-          },
-          "response": [
-            {
-              "name": "200 OK",
-              "originalRequest": {
-                "method": "GET",
-                "header": [],
-                "url": {
-                  "raw": "{{base_url}}/api/uuid",
-                  "host": ["{{base_url}}"],
-                  "path": ["api", "uuid"]
-                }
-              },
-              "status": "OK",
-              "code": 200,
-              "header": [
-                {
-                  "key": "Content-Type",
-                  "value": "application/json"
-                }
-              ],
-              "body": "{\n  \"uuid\": \"b8b584c4-865f-4a7f-8b52-63ac4bf23783\",\n  \"version\": 4,\n  \"timestamp\": \"2026-07-31T02:20:23.308270+00:00\"\n}"
-            }
-          ]
-        },
-        {
-          "name": "GET /docs",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/docs",
-              "host": ["{{base_url}}"],
-              "path": ["docs"]
-            },
-            "description": "Documentación automática (Swagger UI)"
-          }
         }
       ]
     },
     {
-      "name": "Endpoints privados",
+      "name": "Privados (X-API-Key)",
       "item": [
+        {
+          "name": "GET /",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/",
+              "host": ["{{base_url}}"],
+              "path": [""]
+            },
+            "description": "Landing: nombre, versión y lista de endpoints."
+          }
+        },
         {
           "name": "GET /api",
           "request": {
@@ -324,37 +106,8 @@
               "host": ["{{base_url}}"],
               "path": ["api"]
             },
-            "description": "Resumen del estado de la API"
-          },
-          "response": [
-            {
-              "name": "200 OK",
-              "originalRequest": {
-                "method": "GET",
-                "header": [
-                  {
-                    "key": "X-API-Key",
-                    "value": "{{api_key}}",
-                    "type": "text"
-                  }
-                ],
-                "url": {
-                  "raw": "{{base_url}}/api",
-                  "host": ["{{base_url}}"],
-                  "path": ["api"]
-                }
-              },
-              "status": "OK",
-              "code": 200,
-              "header": [
-                {
-                  "key": "Content-Type",
-                  "value": "application/json"
-                }
-              ],
-              "body": "{\n  \"service\": \"homelab-api\",\n  \"status\": \"running\",\n  \"version\": \"1.0.0\",\n  \"private_endpoints\": [\n    \"/api/status\",\n    \"/api/containers\"\n  ]\n}"
-            }
-          ]
+            "description": "Resumen del estado de la API."
+          }
         },
         {
           "name": "GET /api/status",
@@ -372,37 +125,8 @@
               "host": ["{{base_url}}"],
               "path": ["api", "status"]
             },
-            "description": "Estado de los contenedores (up/down/unknown)"
-          },
-          "response": [
-            {
-              "name": "200 OK",
-              "originalRequest": {
-                "method": "GET",
-                "header": [
-                  {
-                    "key": "X-API-Key",
-                    "value": "{{api_key}}",
-                    "type": "text"
-                  }
-                ],
-                "url": {
-                  "raw": "{{base_url}}/api/status",
-                  "host": ["{{base_url}}"],
-                  "path": ["api", "status"]
-                }
-              },
-              "status": "OK",
-              "code": 200,
-              "header": [
-                {
-                  "key": "Content-Type",
-                  "value": "application/json"
-                }
-              ],
-              "body": "{\n  \"server\": \"debian-server\",\n  \"services\": {\n    \"traefik\": \"up\",\n    \"homepage\": \"up\",\n    \"portainer\": \"up\",\n    \"n8n\": \"up\",\n    \"uptime-kuma\": \"up\"\n  },\n  \"timestamp\": \"2026-07-31T02:20:23.449788+00:00\"\n}"
-            }
-          ]
+            "description": "Estado de los servicios (up/down/unknown)."
+          }
         },
         {
           "name": "GET /api/containers",
@@ -420,7 +144,127 @@
               "host": ["{{base_url}}"],
               "path": ["api", "containers"]
             },
-            "description": "Detalle de contenedores (imagen, estado, health)"
+            "description": "Detalle de contenedores vía socket-proxy (solo lectura)."
+          }
+        },
+        {
+          "name": "GET /api/time",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/time",
+              "host": ["{{base_url}}"],
+              "path": ["api", "time"]
+            },
+            "description": "Hora del servidor en UTC + timestamp Unix."
+          }
+        },
+        {
+          "name": "GET /api/ip",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/ip",
+              "host": ["{{base_url}}"],
+              "path": ["api", "ip"]
+            },
+            "description": "IP del cliente vista por el servidor."
+          }
+        },
+        {
+          "name": "GET /api/request",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/request?foo=bar",
+              "host": ["{{base_url}}"],
+              "path": ["api", "request"],
+              "query": [
+                {
+                  "key": "foo",
+                  "value": "bar"
+                }
+              ]
+            },
+            "description": "Echo sanitizado de la request (headers y query params sensibles redactados)."
+          }
+        },
+        {
+          "name": "GET /api/server",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/server",
+              "host": ["{{base_url}}"],
+              "path": ["api", "server"]
+            },
+            "description": "Hostname y uptime del servidor."
+          }
+        },
+        {
+          "name": "GET /api/uuid",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/uuid",
+              "host": ["{{base_url}}"],
+              "path": ["api", "uuid"]
+            },
+            "description": "UUID v4 aleatorio."
+          }
+        },
+        {
+          "name": "GET /api/resources",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/resources",
+              "host": ["{{base_url}}"],
+              "path": ["api", "resources"]
+            },
+            "description": "CPU, load average, memoria/swap, disco visible por el contenedor y uptime. Los campos no disponibles devuelven null."
           },
           "response": [
             {
@@ -435,9 +279,9 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{base_url}}/api/containers",
+                  "raw": "{{base_url}}/api/resources",
                   "host": ["{{base_url}}"],
-                  "path": ["api", "containers"]
+                  "path": ["api", "resources"]
                 }
               },
               "status": "OK",
@@ -448,7 +292,175 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"server\": \"debian-server\",\n  \"containers\": [\n    {\n      \"name\": \"api\",\n      \"image\": \"api-api\",\n      \"state\": \"running\",\n      \"status\": \"Up 26 minutes\"\n    },\n    {\n      \"name\": \"traefik\",\n      \"image\": \"traefik:latest\",\n      \"state\": \"running\",\n      \"status\": \"Up 2 hours\"\n    }\n  ],\n  \"timestamp\": \"2026-07-31T02:20:23.449788+00:00\"\n}"
+              "body": "{\n  \"hostname\": \"debian-server\",\n  \"timestamp\": \"2026-11-11T01:24:05.152624+00:00\",\n  \"uptime_seconds\": 38316,\n  \"cpu\": {\n    \"cores\": 2,\n    \"load_average\": {\"1m\": 0.08, \"5m\": 0.17, \"15m\": 0.17},\n    \"usage_percent\": 5.0\n  },\n  \"memory\": {\n    \"total_bytes\": 3259953152,\n    \"used_bytes\": 2081710080,\n    \"available_bytes\": 1178243072,\n    \"used_percent\": 63.86,\n    \"swap\": {\n      \"total_bytes\": 2147479552,\n      \"used_bytes\": 524288,\n      \"free_bytes\": 2146955264,\n      \"used_percent\": 0.02\n    }\n  },\n  \"disk\": [\n    {\n      \"path\": \"/\",\n      \"total_bytes\": 63871643648,\n      \"used_bytes\": 13855703040,\n      \"free_bytes\": 46738251776,\n      \"used_percent\": 21.69\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "GET /openapi.json",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/openapi.json",
+              "host": ["{{base_url}}"],
+              "path": ["openapi.json"]
+            },
+            "description": "Schema OpenAPI. Protegido con X-API-Key; /docs y /redoc están deshabilitados."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Power (X-API-Key + X-Power-Approval-Key)",
+      "item": [
+        {
+          "name": "POST /api/power/shutdown/prepare",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              },
+              {
+                "key": "X-Power-Approval-Key",
+                "value": "{{power_api_key}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/power/shutdown/prepare",
+              "host": ["{{base_url}}"],
+              "path": ["api", "power", "shutdown", "prepare"]
+            },
+            "description": "Emite un approval_token de un solo uso, válido 30 s, para host.shutdown. Guardá el valor en {{approval_token}}."
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "X-API-Key",
+                    "value": "{{api_key}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "X-Power-Approval-Key",
+                    "value": "{{power_api_key}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/power/shutdown/prepare",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "power", "shutdown", "prepare"]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"operation\": \"host.shutdown\",\n  \"approval_token\": \"{{approval_token}}\",\n  \"expires_at\": \"2026-11-10T22:20:53.308270+00:00\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "POST /api/power/shutdown",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              },
+              {
+                "key": "X-Power-Approval-Key",
+                "value": "{{power_api_key}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"approval_token\": \"{{approval_token}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/power/shutdown",
+              "host": ["{{base_url}}"],
+              "path": ["api", "power", "shutdown"]
+            },
+            "description": "Consume la aprobación y agenda el apagado. Un token solo puede usarse una vez."
+          },
+          "response": [
+            {
+              "name": "202 Accepted",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "X-API-Key",
+                    "value": "{{api_key}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "X-Power-Approval-Key",
+                    "value": "{{power_api_key}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"approval_token\": \"{{approval_token}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/power/shutdown",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "power", "shutdown"]
+                }
+              },
+              "status": "Accepted",
+              "code": 202,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"status\": \"shutdown_scheduled\",\n  \"operation\": \"host.shutdown\",\n  \"audit_id\": \"<32-hex>\"\n}"
             }
           ]
         }
@@ -458,16 +470,16 @@
       "name": "Casos 401",
       "item": [
         {
-          "name": "GET /api (sin key)",
+          "name": "GET /api/status (sin key)",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/api",
+              "raw": "{{base_url}}/api/status",
               "host": ["{{base_url}}"],
-              "path": ["api"]
+              "path": ["api", "status"]
             },
-            "description": "Endpoint privado sin X-API-Key → 401"
+            "description": "Endpoint privado sin X-API-Key → 401."
           },
           "response": [
             {
@@ -475,54 +487,6 @@
               "originalRequest": {
                 "method": "GET",
                 "header": [],
-                "url": {
-                  "raw": "{{base_url}}/api",
-                  "host": ["{{base_url}}"],
-                  "path": ["api"]
-                }
-              },
-              "status": "Unauthorized",
-              "code": 401,
-              "header": [
-                {
-                  "key": "Content-Type",
-                  "value": "application/json"
-                }
-              ],
-              "body": "{\n  \"detail\": \"Invalid API Key\"\n}"
-            }
-          ]
-        },
-        {
-          "name": "GET /api/status (key inválida)",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "X-API-Key",
-                "value": "key-invalida",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/status",
-              "host": ["{{base_url}}"],
-              "path": ["api", "status"]
-            },
-            "description": "Endpoint privado con X-API-Key incorrecta → 401"
-          },
-          "response": [
-            {
-              "name": "401 Unauthorized",
-              "originalRequest": {
-                "method": "GET",
-                "header": [
-                  {
-                    "key": "X-API-Key",
-                    "value": "key-invalida",
-                    "type": "text"
-                  }
-                ],
                 "url": {
                   "raw": "{{base_url}}/api/status",
                   "host": ["{{base_url}}"],
@@ -542,40 +506,55 @@
           ]
         },
         {
-          "name": "GET /api/containers (sin key)",
+          "name": "GET /api/resources (sin key)",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/api/containers",
+              "raw": "{{base_url}}/api/resources",
               "host": ["{{base_url}}"],
-              "path": ["api", "containers"]
+              "path": ["api", "resources"]
             },
-            "description": "Endpoint privado sin X-API-Key → 401"
-          },
-          "response": [
-            {
-              "name": "401 Unauthorized",
-              "originalRequest": {
-                "method": "GET",
-                "header": [],
-                "url": {
-                  "raw": "{{base_url}}/api/containers",
-                  "host": ["{{base_url}}"],
-                  "path": ["api", "containers"]
-                }
-              },
-              "status": "Unauthorized",
-              "code": 401,
-              "header": [
-                {
-                  "key": "Content-Type",
-                  "value": "application/json"
-                }
-              ],
-              "body": "{\n  \"detail\": \"Invalid API Key\"\n}"
-            }
-          ]
+            "description": "Endpoint privado sin X-API-Key → 401."
+          }
+        },
+        {
+          "name": "POST /api/power/shutdown/prepare (sin power key)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/power/shutdown/prepare",
+              "host": ["{{base_url}}"],
+              "path": ["api", "power", "shutdown", "prepare"]
+            },
+            "description": "Falta X-Power-Approval-Key → 401."
+          }
+        },
+        {
+          "name": "GET /api/status (key inválida)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "key-invalida",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/status",
+              "host": ["{{base_url}}"],
+              "path": ["api", "status"]
+            },
+            "description": "Endpoint privado con X-API-Key incorrecta → 401."
+          }
         }
       ]
     }

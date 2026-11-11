@@ -93,6 +93,7 @@ El acceso externo:
 │   ├── public-access.md        ← Acceso público (Tailscale Funnel + DuckDNS)
 │   ├── traefik.md              ← Traefik reverse proxy
 │   ├── api.md                  ← Documentación de la API (pública y privada)
+│   ├── desarrollo-endpoints.md ← Guía para agregar endpoints a la API
 │   ├── ANALISIS-SERVER.md      ← Análisis del server y guía de endpoints
 │   └── dr.md                   ← Runbook de disaster recovery (v1.1)
 ├── assets/

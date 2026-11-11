@@ -1,5 +1,9 @@
 from datetime import datetime, timezone
+import os
+import shutil
+from time import sleep
 import uuid
+from glob import glob
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -43,6 +47,144 @@ SENSITIVE_QUERY_PARAMS = {
 REDACTED = "<redacted>"
 logger = logging.getLogger(__name__)
 
+DISK_PATHS = ("/", "/app")
+
+
+def _read_cpu_times():
+    try:
+        with open("/proc/stat") as f:
+            fields = f.readline().split()
+        if not fields or fields[0] != "cpu":
+            return None
+        values = [int(value) for value in fields[1:]]
+        idle = values[3] + (values[4] if len(values) > 4 else 0)
+        return sum(values), idle
+    except (OSError, ValueError, IndexError):
+        return None
+
+
+def _cpu_usage_percent():
+    first = _read_cpu_times()
+    if first is None:
+        return None
+    sleep(0.1)
+    second = _read_cpu_times()
+    if second is None:
+        return None
+    total_delta = second[0] - first[0]
+    idle_delta = second[1] - first[1]
+    if total_delta <= 0:
+        return None
+    usage = 100.0 * (1.0 - idle_delta / total_delta)
+    return round(max(0.0, min(100.0, usage)), 2)
+
+
+def _load_average():
+    try:
+        with open("/proc/loadavg") as f:
+            values = f.read().split()
+        return {
+            "1m": float(values[0]),
+            "5m": float(values[1]),
+            "15m": float(values[2]),
+        }
+    except (OSError, ValueError, IndexError):
+        return None
+
+
+def _memory_info():
+    try:
+        values = {}
+        with open("/proc/meminfo") as f:
+            for line in f:
+                name, raw = line.split(":", 1)
+                values[name] = int(raw.split()[0]) * 1024
+    except (OSError, ValueError, IndexError):
+        return None
+
+    total = values.get("MemTotal")
+    if not total:
+        return None
+
+    available = values.get("MemAvailable")
+    if available is None:
+        available = (
+            values.get("MemFree", 0)
+            + values.get("Buffers", 0)
+            + values.get("Cached", 0)
+        )
+    used = max(0, total - available)
+    memory = {
+        "total_bytes": total,
+        "used_bytes": used,
+        "available_bytes": available,
+        "used_percent": round(used / total * 100.0, 2),
+        "swap": None,
+    }
+
+    swap_total = values.get("SwapTotal", 0)
+    if swap_total:
+        swap_free = values.get("SwapFree", 0)
+        swap_used = max(0, swap_total - swap_free)
+        memory["swap"] = {
+            "total_bytes": swap_total,
+            "used_bytes": swap_used,
+            "free_bytes": swap_free,
+            "used_percent": round(swap_used / swap_total * 100.0, 2),
+        }
+    return memory
+
+
+def _disk_info():
+    disks = []
+    seen_devices = set()
+    for path in DISK_PATHS:
+        if not os.path.isdir(path):
+            continue
+        try:
+            device = os.stat(path).st_dev
+            usage = shutil.disk_usage(path)
+        except OSError:
+            continue
+        if device in seen_devices:
+            continue
+        seen_devices.add(device)
+        disks.append(
+            {
+                "path": path,
+                "total_bytes": usage.total,
+                "used_bytes": usage.used,
+                "free_bytes": usage.free,
+                "used_percent": round(usage.used / usage.total * 100.0, 2)
+                if usage.total
+                else None,
+            }
+        )
+    return disks or None
+
+
+def _uptime_seconds():
+    try:
+        with open("/proc/uptime") as f:
+            return int(float(f.read().split()[0]))
+    except (OSError, ValueError, IndexError):
+        return None
+
+
+def _cpu_temperature_c():
+    temperatures = []
+    for path in glob("/sys/class/thermal/thermal_zone*/temp"):
+        try:
+            with open(path) as f:
+                raw = int(f.read().strip())
+        except (OSError, ValueError):
+            continue
+        if raw > 0:
+            temperatures.append(raw / 1000.0)
+    if not temperatures:
+        return None
+    return round(max(temperatures), 1)
+
 
 class ShutdownApprovalRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -53,17 +195,22 @@ class ShutdownApprovalRequest(BaseModel):
 def root():
     return {
         "name": "Homelab API",
-        "version": "1.0.0",
-        "description": "API pública del homelab",
+        "version": "1.1.0",
+        "description": "API del homelab",
         "endpoints": {
             "root": "/",
             "health": "/api/health",
+            "status": "/api/status",
+            "containers": "/api/containers",
             "time": "/api/time",
             "ip": "/api/ip",
             "request": "/api/request",
             "server": "/api/server",
             "uuid": "/api/uuid",
-            "docs": "/openapi.json",
+            "resources": "/api/resources",
+            "power_shutdown_prepare": "/api/power/shutdown/prepare",
+            "power_shutdown": "/api/power/shutdown",
+            "openapi": "/openapi.json",
         },
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
@@ -74,8 +221,22 @@ def api_root():
     return {
         "service": "homelab-api",
         "status": "running",
-        "version": "1.0.0",
-        "private_endpoints": ["/api/status", "/api/containers"],
+        "version": "1.1.0",
+        "private_endpoints": [
+            "/",
+            "/api",
+            "/api/status",
+            "/api/containers",
+            "/api/time",
+            "/api/ip",
+            "/api/request",
+            "/api/server",
+            "/api/uuid",
+            "/api/resources",
+            "/api/power/shutdown/prepare",
+            "/api/power/shutdown",
+            "/openapi.json",
+        ],
     }
 
 
@@ -166,6 +327,26 @@ def gen_uuid():
         "version": 4,
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
+
+
+@private_router.get("/api/resources")
+def resources():
+    payload = {
+        "hostname": HOSTNAME,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "uptime_seconds": _uptime_seconds(),
+        "cpu": {
+            "cores": os.cpu_count(),
+            "load_average": _load_average(),
+            "usage_percent": _cpu_usage_percent(),
+        },
+        "memory": _memory_info(),
+        "disk": _disk_info(),
+    }
+    temperature = _cpu_temperature_c()
+    if temperature is not None:
+        payload["temperature_c"] = temperature
+    return payload
 
 
 @private_router.post(

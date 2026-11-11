@@ -18,7 +18,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="Homelab API",
-    version="1.0.0",
+    version="1.1.0",
     description=(
         "API del homelab. Solo GET /api/health es público; el resto "
         "requiere X-API-Key."

@@ -24,19 +24,19 @@ Internet
             ├─ SSH (22)              ⬥ Solo key, sin root
             ├─ Firewall DOCKER-USER  ⬥ Bloquea LAN no autorizada
             └─ Docker Engine (29.6.2)
-                 ├─ Traefik (:80/8080)     ⬥ Reverse proxy (host-based routing)
-                 ├─ API (8000)            ⬥ FastAPI (público por Funnel)
+                 ├─ Traefik (:80/443)      ⬥ Reverse proxy (HTTP LAN + HTTPS LAN)
+                 ├─ API (8000)            ⬥ FastAPI (Funnel: solo health público)
                  ├─ Portainer (9000)      ⬥ Administración de contenedores
                  ├─ Homepage (3000)       ⬥ Dashboard de servicios
                  ├─ n8n (5678)            ⬥ Automatización low-code
                  └─ Uptime Kuma (3001)    ⬥ Monitoreo de uptime
 ```
 
-Todos los servicios comparten la red `homelab` (external: true, 172.22.0.0/16). Traefik actúa como reverse proxy central con host-based routing (`.homelab`). Sin TLS todavía (fase futura).
+Todos los servicios comparten la red `homelab` (external: true, 172.22.0.0/16). La API usa además la red interna `homelab-docker-api` para hablar con `socket-proxy` (sin montar `docker.sock`). Traefik actúa como reverse proxy central con file provider: HTTP en `127.0.0.1:80` (host-based routing `.homelab`) y HTTPS en LAN (`debian-server.local`) con TLS.
 
 El acceso externo:
 - **Privado**: Tailscale (tailnet) para servicios administrativos
-- **Público**: Tailscale Funnel para la API (`https://debian-server.taile532c7.ts.net/api`)
+- **Público**: Tailscale Funnel para la API (`https://debian-server.taile532c7.ts.net`); solo `GET /api/health` es público, el resto requiere `X-API-Key`
 - **Proxy interno**: Traefik en `127.0.0.1:80` enruta por hostname a cada servicio
 
 ## Estructura de carpetas
@@ -92,7 +92,8 @@ El acceso externo:
 │   ├── acceso-remoto.md        ← Acceso remoto desde Ubuntu (SSH + Tailscale + OpenCode)
 │   ├── public-access.md        ← Acceso público (Tailscale Funnel + DuckDNS)
 │   ├── traefik.md              ← Traefik reverse proxy
-│   ├── api.md                  ← Documentación de la API pública
+│   ├── api.md                  ← Documentación de la API (pública y privada)
+│   ├── ANALISIS-SERVER.md      ← Análisis del server y guía de endpoints
 │   └── dr.md                   ← Runbook de disaster recovery (v1.1)
 ├── assets/
 │   ├── diagramas/
@@ -104,12 +105,15 @@ El acceso externo:
     │   ├── .env                 ← Credenciales (no versionado)
     │   ├── .env.example
     │   ├── compose.yaml
+    │   ├── compose.funnel-transition.yaml  ← Override temporal: publica 127.0.0.1:8000
     │   └── app/
-    │       ├── main.py          ← FastAPI (público por Tailscale Funnel)
+    │       ├── main.py          ← FastAPI (solo /api/health público)
+    │       ├── config.py        ← API_KEY, comparación constant-time, fail-closed
+    │       ├── power.py         ← Aprobación y cliente del socket de apagado
     │       ├── util.py          ← Key check, helpers Docker, HOSTNAME, SERVICES
     │       └── routers/
     │           ├── __init__.py
-    │           ├── public.py    ← Endpoints públicos
+    │           ├── public.py    ← Endpoint público (health)
     │           └── private.py   ← Endpoints privados (X-API-Key)
     ├── firewall/
     │   ├── restore-docker-user.sh       ← Script de restauración del firewall
@@ -134,8 +138,8 @@ El acceso externo:
 
 | Servicio   | Imagen                              | Puerto   | Estado       | Acceso       |
 |------------|-------------------------------------|----------|--------------|--------------|
-| Traefik    | traefik:v3.7                        | 80/8080  | Up           | localhost     |
-| API        | build local (Dockerfile)            | 8000     | Up           | Público      |
+| Traefik    | traefik:v3.7.9                      | 80/443   | Up           | localhost/LAN |
+| API        | build local (Dockerfile)            | 8000     | Up (healthy) | Público (solo health) |
 | Portainer  | portainer/portainer-ce:latest       | 9000     | Up           | Tailnet/LAN  |
 | Homepage   | ghcr.io/gethomepage/homepage:latest | 3000     | Up (healthy) | Tailnet/LAN  |
 | n8n        | docker.n8n.io/n8nio/n8n:latest      | 5678     | Up           | Tailnet      |
@@ -144,12 +148,12 @@ El acceso externo:
 ## Puertos utilizados
 
 - 22: SSH (solo key, sin password)
-- 80: Traefik HTTP (localhost only, host-based routing)
+- 80: Traefik HTTP (localhost only, host-based routing `.homelab`)
+- 443: Traefik HTTPS (LAN, `debian-server.local`, TLS)
 - 8000: API (localhost only, expuesta por Tailscale Funnel)
 - 3000: Homepage (dashboard)
 - 3001: Uptime Kuma (monitoreo)
 - 5678: n8n (automatización)
-- 8080: Traefik dashboard (localhost only)
 - 9000: Portainer (administración)
 
 ## Ubicación de datos persistentes
@@ -183,7 +187,7 @@ Convención: `~/homelab-data/<nombre-servicio>/` (excepción: API, que solo usa 
 
 ## Exposición pública
 
-- **Tailscale Funnel**: solo para APIs/servicios públicos
+- **Tailscale Funnel**: solo para APIs/servicios públicos; en la API, únicamente `GET /api/health` responde sin key
 - **Tailscale Serve**: para paneles administrativos (privado, solo tailnet)
 - No exponer Portainer, Homepage, n8n ni Uptime Kuma por Funnel
 - Los bind mounts a `localhost` (127.0.0.1) evitan exposición a LAN
@@ -201,8 +205,11 @@ Agregadas en `DOCKER-USER` (cadena de admin que Docker preserva):
 3. `-i br+/docker0 dport 53 (udp+tcp)` — DNS desde contenedores
 4. `-i br+/docker0 dport 80,443` — HTTP/HTTPS desde contenedores
 5. `-i br+/docker0 icmp` — ping desde contenedores
-6. `-s 192.168.1.0/24 dport 3000` — Homepage desde LAN
-7. DROP — todo lo demás bloqueado
+6. `-i enp3s0 -s 192.168.1.0/24 dport 3000` — Homepage desde LAN
+7. `-i enp3s0 -s 192.168.1.0/24 dport 443` — Traefik HTTPS desde LAN
+8. DROP — todo lo demás bloqueado
+
+Además se bloquean por IPv6 los puertos `3000,3001,5678,9000,443,8000,2375` en `enp3s0` (Docker abre listeners wildcard IPv6 aunque el host no tenga IPv6 global).
 
 ### Persistencia
 
@@ -306,7 +313,7 @@ El homelab es reconstruible desde cero. Objetivo: **reinstalar Debian + clonar r
 - [x] Firewall (DOCKER-USER) — bloqueo de LAN no autorizada
 - [x] Sistema de backups automáticos
 - [x] Tailscale Funnel — publicación segura de servicios sin abrir puertos
-- [x] API pública (FastAPI) — endpoints públicos y privados con X-API-Key
+- [x] API (FastAPI) — solo `/api/health` público; recursos (`/api/resources`) y apagado auditado (`/api/power/*`) privados con `X-API-Key`
 - [x] DuckDNS — actualización dinámica de IP via systemd timer
 - [x] Bootstrap reproducible (`bootstrap/bootstrap.sh`)
 - [~] Ansible — esqueleto creado, migración progresiva en curso

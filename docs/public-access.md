@@ -25,7 +25,7 @@ Servidor Debian (192.168.1.50)
 Docker — container api:8000 (red homelab)
     |
     ▼
-FastAPI — GET /, /api/health, /api/time, /api/ip, /api/request, /api/server, /api/uuid
+FastAPI — GET /api/health (público) + endpoints privados con X-API-Key
 ```
 
 ### Flujo de tráfico
@@ -228,33 +228,39 @@ curl -s "https://www.duckdns.org/update?domains=homelab404-debian&token=<token>&
 
 ### API Key
 
-La API soporta el header `X-API-Key` para endpoints protegidos.
+La API exige el header `X-API-Key` en todas las rutas excepto `GET /api/health`. Los endpoints de apagado requieren además `X-Power-Approval-Key`.
 
 ### Endpoints públicos (sin key)
 
 | Endpoint | Descripción |
 |----------|-------------|
-| `GET /` | Landing: nombre, versión y lista de endpoints |
-| `GET /api/health` | Liveness check (estado del servicio) |
-| `GET /api/time` | Hora del servidor en UTC + timestamp Unix |
-| `GET /api/ip` | IP del cliente vista por el servidor |
-| `GET /api/request` | Echo sanitizado de la request (sin headers sensibles) |
-| `GET /api/server` | Hostname y uptime del servidor (datos mínimos) |
-| `GET /api/uuid` | UUID v4 aleatorio |
-| `GET /docs` | Documentación automática (Swagger UI) |
+| `GET /api/health` | Liveness check (payload mínimo) |
 
 ### Endpoints privados (requieren `X-API-Key`)
 
 | Endpoint | Descripción |
 |----------|-------------|
+| `GET /` | Landing: nombre, versión y lista de endpoints |
 | `GET /api` | Resumen del estado de la API |
 | `GET /api/status` | Estado de los contenedores (up/down/unknown) |
 | `GET /api/containers` | Detalle de contenedores (imagen, estado, health) |
+| `GET /api/time` | Hora del servidor en UTC + timestamp Unix |
+| `GET /api/ip` | IP del cliente vista por el servidor |
+| `GET /api/request` | Echo sanitizado de la request |
+| `GET /api/server` | Hostname y uptime del servidor |
+| `GET /api/uuid` | UUID v4 aleatorio |
+| `GET /api/resources` | CPU, memoria, disco y uptime |
+| `POST /api/power/shutdown/prepare` | Emite una aprobación de apagado (30 s) |
+| `POST /api/power/shutdown` | Consume la aprobación y apaga el host |
+| `GET /openapi.json` | Schema OpenAPI (protegido) |
 
-### Seguridad de los endpoints públicos
+La documentación interactiva (`/docs` y `/redoc`) está deshabilitada.
+
+### Seguridad de los endpoints
 
 - `/api/server` expone solo hostname y uptime — sin versión de Docker/Python, sin disco, sin conteo de contenedores (evita fingerprinting)
-- `/api/request` filtra headers sensibles: `Authorization`, `X-API-Key`, `Cookie`, `Proxy-Authorization`
+- `/api/resources` revela métricas del host (CPU, memoria, disco del contenedor, uptime); mantenerlo privado
+- `/api/request` filtra headers y query params sensibles: `Authorization`, `X-API-Key`, `X-Power-Approval-Key`, `Cookie`, `Proxy-Authorization`, tokens
 - `/api/ip` expone la IP del cliente, nunca IPs internas del servidor
 - Los endpoints privados solo responden con `X-API-Key` válido (401 en caso contrario)
 
@@ -267,16 +273,17 @@ openssl rand -hex 32
 # Actualizar en compose/api/.env
 API_KEY=nueva-key-generada
 
-# Reiniciar el contenedor
-docker compose -f compose/api/compose.yaml up -d
+# Reiniciar el contenedor (siempre con ambos archivos)
+docker compose -f compose/api/compose.yaml \
+  -f compose/api/compose.funnel-transition.yaml up -d
 ```
 
 ### Riesgos
 
-- **Funnel expone el servicio a todo Internet** — no hay autenticación de Tailscale
+- **Funnel expone el servicio a todo Internet** — no hay autenticación de Tailscale; solo `/api/health` responde sin key
 - No exponer paneles administrativos por Funnel
-- Mantener la API key fuera de git (`.env` está en `.gitignore`)
-- Montar `/var/run/docker.sock` (read-only) da acceso de lectura a la API de Docker — no exponer datos crudos
+- Mantener las API keys fuera de git (`.env` está en `.gitignore`)
+- La API no monta `/var/run/docker.sock`: usa un `socket-proxy` interno de solo lectura limitado a `GET /containers/json` — no ampliar sin necesidad
 - Monitorear logs del contenedor ante actividad sospechosa
 - Considerar rate limiting si el servicio recibe tráfico no deseado
 - Funnel no incluye WAF (Web Application Firewall) — eso sería una capa futura con reverse proxy

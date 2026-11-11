@@ -57,8 +57,10 @@ Todo lo que se instala, configura o modifica queda documentado.
 | docs/architecture.md | Arquitectura general del homelab |
 | docs/acceso-remoto.md | Acceso remoto desde Ubuntu (SSH, Tailscale, OpenCode) |
 | docs/public-access.md | Acceso público (Tailscale Funnel + DuckDNS) |
+| docs/api.md | Documentación de la API (pública y privada) |
 | docs/traefik.md | Traefik reverse proxy |
 | docs/dr.md | Runbook de disaster recovery (v1.1) |
+| docs/ANALISIS-SERVER.md | Análisis del server y guía para agregar endpoints |
 | bootstrap/ | Script idempotente de reconstrucción |
 | ansible/ | Migración progresiva a IaC (esqueleto) |
 | secrets/ | Vault GPG de secretos cifrados |
@@ -88,7 +90,7 @@ Todo lo que se instala, configura o modifica queda documentado.
 ### Servicios públicos
 
 - [x] Tailscale Funnel — Exposición pública de la API sin abrir puertos
-- [x] API pública (FastAPI) — endpoints públicos (`/`, `/api/health`, `/api/time`, `/api/ip`, `/api/request`, `/api/server`, `/api/uuid`) + privados (`/api`, `/api/status`, `/api/containers`)
+- [x] API (FastAPI) — público: solo `/api/health`; privados con `X-API-Key`: `/`, `/api`, `/api/status`, `/api/containers`, `/api/time`, `/api/ip`, `/api/request`, `/api/server`, `/api/uuid`, `/api/resources`, `/api/power/shutdown/prepare`, `/api/power/shutdown`
 - [x] DuckDNS — Dominio dinámico con actualización automática via systemd timer
 - [x] Bootstrap reproducible — `bootstrap/bootstrap.sh` idempotente
 - [~] Ansible — esqueleto creado, migración progresiva en curso

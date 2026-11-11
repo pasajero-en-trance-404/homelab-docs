@@ -18,6 +18,7 @@ Todas las fechas en `YYYY-MM-DD`.
 
 ### Corregido
 - `/api/resources` devolvía 500 por colisión entre la función `time()` y el módulo `time`; se reemplazó por `from time import sleep`
+- `GET /api/resources`: `cpu.usage_percent` pasó de una ventana fija de 100 ms a un promedio desde la consulta anterior, con estado compartido bajo lock, muestra de 500 ms para primera consulta/lectura vieja/sin delta y protección contra ráfagas concurrentes (<1 s)
 
 ## [2026-10-25] — Documentación de acceso remoto
 

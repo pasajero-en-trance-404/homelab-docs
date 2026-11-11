@@ -26,11 +26,11 @@ Guía corta para agregar endpoints a `compose/api/app/` siguiendo el contrato ac
 ## Ejemplo: `/api/resources`
 
 - Helpers en `routers/private.py`: CPU, load, memoria/swap, disco, uptime y temperatura.
-- CPU: dos lecturas de `/proc/stat` separadas 100 ms; `usage = 100 * (1 - idle_delta / total_delta)`.
+- CPU: una lectura de `/proc/stat` por request y delta contra la lectura anterior guardada a nivel de módulo (con `threading.Lock`); `usage = 100 * (1 - idle_delta / total_delta)`. Es un promedio desde la consulta anterior, no un valor instantáneo. Para primera consulta, lectura vieja (>120 s) o `delta_total == 0`, tomar una muestra bloqueante de 500 ms; si la lectura guardada tiene <1 s, devolver el último valor sin sobrescribirlo.
 - Memoria: `/proc/meminfo`; `used = total - available`.
 - Disco: `shutil.disk_usage(path)`; deduplicar por `st_dev`.
 - Temperatura: leer `/sys/class/thermal/thermal_zone*/temp`; **omitir el campo** si no existe.
-- Ojo: `def time()` ya existe en `private.py` y sombrea el módulo `time`. Usar `from time import sleep` o `import time as time_module`.
+- Ojo: `def time()` ya existe en `private.py` y sombrea el módulo `time`. Usar `from time import monotonic, sleep` o `import time as time_module`.
 
 Qué miden las métricas desde el contenedor:
 

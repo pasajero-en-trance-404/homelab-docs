@@ -1,7 +1,8 @@
 from datetime import datetime, timezone
 import os
 import shutil
-from time import sleep
+import threading
+from time import monotonic, sleep
 import uuid
 from glob import glob
 import logging
@@ -49,6 +50,13 @@ logger = logging.getLogger(__name__)
 
 DISK_PATHS = ("/", "/app")
 
+CPU_SHORT_SAMPLE_SECONDS = 0.5
+CPU_MIN_INTERVAL_SECONDS = 1.0
+CPU_MAX_AGE_SECONDS = 120.0
+
+_cpu_lock = threading.Lock()
+_cpu_last_reading = None
+
 
 def _read_cpu_times():
     try:
@@ -63,20 +71,54 @@ def _read_cpu_times():
         return None
 
 
-def _cpu_usage_percent():
-    first = _read_cpu_times()
-    if first is None:
-        return None
-    sleep(0.1)
-    second = _read_cpu_times()
-    if second is None:
-        return None
-    total_delta = second[0] - first[0]
-    idle_delta = second[1] - first[1]
+def _cpu_usage_from_delta(before, after):
+    total_delta = after[0] - before[0]
+    idle_delta = after[1] - before[1]
     if total_delta <= 0:
         return None
     usage = 100.0 * (1.0 - idle_delta / total_delta)
-    return round(max(0.0, min(100.0, usage)), 2)
+    return round(max(0.0, min(100.0, usage)), 1)
+
+
+def _cpu_usage_percent():
+    global _cpu_last_reading
+
+    current = _read_cpu_times()
+    if current is None:
+        return None
+    read_at = monotonic()
+
+    with _cpu_lock:
+        last = _cpu_last_reading
+        if last is not None:
+            age = monotonic() - last["monotonic"]
+            if age < CPU_MIN_INTERVAL_SECONDS:
+                return last["usage"]
+            if age <= CPU_MAX_AGE_SECONDS:
+                usage = _cpu_usage_from_delta(
+                    (last["total"], last["idle"]), current
+                )
+                if usage is not None:
+                    _cpu_last_reading = {
+                        "total": current[0],
+                        "idle": current[1],
+                        "monotonic": read_at,
+                        "usage": usage,
+                    }
+                    return usage
+
+        sleep(CPU_SHORT_SAMPLE_SECONDS)
+        after = _read_cpu_times()
+        if after is None:
+            return None
+        usage = _cpu_usage_from_delta(current, after)
+        _cpu_last_reading = {
+            "total": after[0],
+            "idle": after[1],
+            "monotonic": monotonic(),
+            "usage": usage,
+        }
+        return usage
 
 
 def _load_average():

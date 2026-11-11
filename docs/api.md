@@ -300,7 +300,7 @@ Notas sobre lo que mide cada campo **desde dentro del contenedor**:
 
 - `cpu.cores`: núcleos visibles (`os.cpu_count()`, normalmente los del host).
 - `cpu.load_average`: `/proc/loadavg`, que **no está namespaced**: refleja el host.
-- `cpu.usage_percent`: delta de dos lecturas de `/proc/stat` separadas 100 ms; también refleja el host. Es aproximado y puede devolver `null` si no hay delta.
+- `cpu.usage_percent`: promedio desde la consulta anterior (ventana típica ≈ intervalo de polling), **no** un valor instantáneo. Se calcula con el delta de `/proc/stat` contra la lectura anterior y refleja el host. Si es la primera consulta, pasaron más de 120 s o no hubo delta, toma una muestra bloqueante de 500 ms. Requests concurrentes con menos de 1 s de antigüedad devuelven el último valor sin sobrescribirlo. Puede devolver `null` si `/proc/stat` no se puede leer.
 - `memory`: `/proc/meminfo` refleja la **memoria del host**, no un límite de cgroup. `used = total - available`.
 - `disk`: `shutil.disk_usage()` solo ve los filesystems **montados en el contenedor** (`/` es el overlay de la imagen, `/app` comparte el mismo device y se deduplica). Para ver el disco real del host haría falta un bind mount de solo lectura (no aplicado).
 - `temperature_c`: solo aparece si `/sys/class/thermal/thermal_zone*/temp` está disponible; si no, el campo se omite.

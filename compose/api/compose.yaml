@@ -1,7 +1,7 @@
 services:
   api:
     build: .
-    image: homelab-ai-api:v1.1.0-resources-20261110
+    image: homelab-ai-api:v1.1.1-cpu-average-20261110
     container_name: api
     hostname: debian-server
     restart: unless-stopped
